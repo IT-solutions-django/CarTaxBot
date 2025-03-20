@@ -37,4 +37,5 @@ class CreateClientView(View):
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Некорректный JSON'}, status=400)
         except Exception as e:
+            print(str(e))
             return JsonResponse({'error': str(e)}, status=500)

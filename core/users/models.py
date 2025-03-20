@@ -12,13 +12,13 @@ class ClientStatus(models.Model):
         return f'{self.name}'
     
     def get_primary_contact_status(): 
-        return ClientStatus.objects.filter(name='Написал боту') 
+        return ClientStatus.objects.filter(name='Написал боту').first()
     
     def get_calculated_tall_status(): 
-        return ClientStatus.objects.filter(name='Рассчитал пошлину') 
+        return ClientStatus.objects.filter(name='Рассчитал пошлину').first()
     
     def get_left_contacts_status(): 
-        return ClientStatus.objects.filter(name='Оставил контактные данные') 
+        return ClientStatus.objects.filter(name='Оставил контактные данные').first()
 
 
 class Client(models.Model): 

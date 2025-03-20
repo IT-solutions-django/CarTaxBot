@@ -3,6 +3,10 @@ from aiogram import types
 from typing import Optional, Dict, List, Union
 from datetime import datetime
 from settings.static import Currency, EngineType
+import aiohttp
+from bs4 import BeautifulSoup
+import json
+from settings.static import Currency
 
 
 
@@ -202,7 +206,34 @@ def get_commissions(currency: Currency) -> tuple[float, float, float, float, flo
             delivery = 1500000 
             our_commission = 100000 
             broker = 100000 
+        case Currency.EUR: 
+            pass 
+        case Currency.USD:
+            pass 
         case _: 
             raise Exception(f'Неизвестная валюта: {currency}')
 
-    return delivery, our_commission, broker, commission_sanctions, delivery_sanctions, insurance
+    return delivery, our_commission, broker, commission_sanctions, delivery_sanctions, insurance 
+
+
+async def add_new_client(telegram_id: int, name: str = None, phone: str = None) -> None:
+    url = 'http://127.0.0.1:8000/users/add-client/'  
+    headers = {
+        'Content-Type': 'application/json',
+    }
+    data = {
+        'telegram_id': telegram_id,
+        'name': name,
+        'phone': phone,
+    }
+    
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, data=json.dumps(data)) as response:
+            if response.status == 201:
+                response_data = await response.json()
+                print(f"Клиент успешно добавлен: {response_data['message']}, Client ID: {response_data['client_id']}")
+            elif response.status == 400:
+                response_data = await response.json()
+                print(f"Ошибка: {response_data.get('error', 'Unknown error')}")
+            else:
+                print(f"Неизвестная ошибка: {response.status}")

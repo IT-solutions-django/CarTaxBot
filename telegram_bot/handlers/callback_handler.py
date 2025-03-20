@@ -13,10 +13,6 @@ from keyboards import keyboards
 router = Router()
 
 
-user_data = {}
-
-
-# Шаг 1: Запрос валюты
 @router.callback_query(F.data == 'calculate_duty')
 async def ask_currency(callback: types.CallbackQuery, state: FSMContext):
     await state.set_state(CarDutyCalculation.currency)
@@ -27,7 +23,6 @@ async def ask_currency(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-# Шаг 2: Запрос стоимости
 @router.callback_query(CarDutyCalculation.currency, F.data.startswith('currency_'))
 async def ask_cost(callback: types.CallbackQuery, state: FSMContext):
     currency = callback.data.split('_')[-1]
@@ -38,7 +33,6 @@ async def ask_cost(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-# Шаг 3: Запрос объёма двигателя
 @router.message(CarDutyCalculation.cost, F.text.regexp(r'^\d+$'))
 async def ask_engine_volume(message: types.Message, state: FSMContext):
     await state.update_data(cost=int(message.text))
@@ -46,7 +40,6 @@ async def ask_engine_volume(message: types.Message, state: FSMContext):
     await message.answer("Введите объём двигателя (в см³):")
 
 
-# Шаг 4: Запрос мощности
 @router.message(CarDutyCalculation.engine_volume, F.text.regexp(r'^\d+$'))
 async def ask_power(message: types.Message, state: FSMContext):
     await state.update_data(engine_volume=int(message.text))
@@ -55,7 +48,6 @@ async def ask_power(message: types.Message, state: FSMContext):
     await message.answer("Введите мощность двигателя (в л.с. или кВт):")
 
 
-# Шаг 5: Запрос массы
 @router.message(CarDutyCalculation.power, F.text.regexp(r'^\d+$'))
 async def ask_weight(message: types.Message, state: FSMContext):
     await state.update_data(power=int(message.text))
@@ -64,7 +56,6 @@ async def ask_weight(message: types.Message, state: FSMContext):
     await message.answer("Введите массу автомобиля (в тоннах):")
 
 
-# Шаг 6: Запрос возраста автомобиля
 @router.message(CarDutyCalculation.weight, F.text.regexp(r'^\d+(\.\d+)?$'))
 async def ask_age(message: types.Message, state: FSMContext):
     await state.update_data(weight=float(message.text))
@@ -75,7 +66,6 @@ async def ask_age(message: types.Message, state: FSMContext):
     await message.answer("Выберите возраст автомобиля:", reply_markup=keyboard)
 
 
-# Шаг 7: Запрос типа двигателя
 @router.callback_query(CarDutyCalculation.age, F.data.startswith('age_'))
 async def ask_engine_type(callback: types.CallbackQuery, state: FSMContext):
     age = callback.data.split('_')[-1]

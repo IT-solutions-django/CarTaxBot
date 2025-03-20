@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles', 
 
     'users',
+    'currencies',
 ]
 
 MIDDLEWARE = [
@@ -143,3 +144,22 @@ logger.add("logs/logs.log",
            compression="zip", 
            level="DEBUG", 
            enqueue=True)
+
+
+# Redis 
+REDIS_HOST = 'redis' 
+
+# Для локальной разработки
+# REDIS_HOST = 'localhost' 
+
+REDIS_PORT = '6379' 
+
+
+# Celery
+CELERY_BROKER_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'
+CELERY_BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600} 
+CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'
+CELERY_ACCEPT_CONTENT = ['application/json'] 
+CELERY_TASK_SERIALIZER = 'json' 
+CELERY_RESULT_SERIALIZER = 'json' 
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
