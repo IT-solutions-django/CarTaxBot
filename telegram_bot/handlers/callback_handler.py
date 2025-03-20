@@ -119,7 +119,8 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
         f"Масса: {weight} тонн\n"
         f"Возраст: {age}\n"
         f"Тип двигателя: {engine_type}\n"
-        f"Размер пошлины: {duty} рублей"
+        f"Размер пошлины: {duty} рублей\n\n"
+        f"Данный расчёт является приблизительным, свяжитесь с нами для уточнения деталей"
     )
 
     await state.clear()  
