@@ -20,4 +20,5 @@ async def send_welcome(message: types.Message) -> None:
     )
 
 
+
 # Только для тестов

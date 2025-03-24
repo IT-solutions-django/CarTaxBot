@@ -7,7 +7,10 @@ import aiohttp
 from bs4 import BeautifulSoup
 import json
 from settings.static import Currency
+from settings.static import BackendURL
 
+
+back_domain = BackendURL.DOMAIN.value
 
 
 async def show_options(obj: Union[types.CallbackQuery, types.Message], data_dict: Dict[str, dict], exclude_key: str,
@@ -183,9 +186,9 @@ def calc_toll(price: int, age: int, volume: int, currency: str, engine_type: str
 
 
 def get_commissions(currency: Currency) -> tuple[float, float, float, float, float, float]:
-    delivery = None 
-    our_commission = None 
-    broker = None
+    delivery = 0 
+    our_commission = 0 
+    broker = 0
     commission_sanctions = 0
     delivery_sanctions = 0
     insurance = 0
@@ -217,7 +220,7 @@ def get_commissions(currency: Currency) -> tuple[float, float, float, float, flo
 
 
 async def add_new_client(telegram_id: int, name: str = None, phone: str = None) -> None:
-    url = 'http://127.0.0.1:8000/users/add-client/'  
+    url = f'http://{back_domain}:8000/users/add-client/'  
     headers = {
         'Content-Type': 'application/json',
     }
@@ -229,9 +232,34 @@ async def add_new_client(telegram_id: int, name: str = None, phone: str = None) 
     
     async with aiohttp.ClientSession() as session:
         async with session.post(url, headers=headers, data=json.dumps(data)) as response:
-            if response.status == 201:
+            if response.status == 201 or 200:
                 response_data = await response.json()
-                print(f"Клиент успешно добавлен: {response_data['message']}, Client ID: {response_data['client_id']}")
+                print(f"Клиент успешно добавлен")
+            elif response.status == 400:
+                response_data = await response.json()
+                print(f"Ошибка: {response_data.get('error', 'Unknown error')}")
+            else:
+                print(f"Неизвестная ошибка: {response.status}")
+
+
+async def set_contact_data(telegram_id: int, name: str = None, phone: str = None) -> None:
+    url = f'http://{back_domain}:8000/users/set-contact-data/'  
+    headers = {
+        'Content-Type': 'application/json',
+    }
+    data = {
+        'telegram_id': telegram_id,
+        'name': name,
+        'phone': phone,
+    }
+
+    print('set_contact_data')
+    
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, data=json.dumps(data)) as response:
+            if response.status == 201 or 200:
+                response_data = await response.json()
+                print(f"Контактные данные успешно добавлены: {response_data['message']}, Client ID: {response_data['client_id']}")
             elif response.status == 400:
                 response_data = await response.json()
                 print(f"Ошибка: {response_data.get('error', 'Unknown error')}")

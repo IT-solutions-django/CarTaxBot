@@ -10,3 +10,8 @@ class CarDutyCalculation(StatesGroup):
     weight = State()
     age = State()
     engine_type = State()
+
+
+class ClientContacts(StatesGroup):
+    name = State()
+    phone = State()

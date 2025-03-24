@@ -5,8 +5,8 @@ from settings.static import Message
 from settings.utils import show_options
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
-from .state import CarDutyCalculation
-from settings.utils import calc_toll
+from .state import CarDutyCalculation, ClientContacts
+from settings.utils import calc_toll, set_contact_data
 
 from keyboards import keyboards
 
@@ -115,3 +115,44 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
 
     await state.clear()  
     await callback.answer()
+
+
+
+
+@router.callback_query(F.data == 'contact')
+async def ask_name(callback: types.CallbackQuery, state: FSMContext):
+    await state.set_state(ClientContacts.name)
+    await callback.message.answer("Введите ваше имя:")
+    await callback.answer()
+
+
+@router.message(ClientContacts.name, F.text.regexp(r'^[a-zA-Zа-яА-ЯёЁ\s]+$'))
+async def ask_phone(message: types.Message, state: FSMContext):
+    await state.update_data(name=message.text)
+    await state.set_state(ClientContacts.phone)
+
+    await message.answer("Введите ваш номер телефона (например: +7 123 456 67-89):")
+
+
+@router.message(ClientContacts.phone, F.text.regexp(r'.*'))
+async def confirm_info(message: types.Message, state: FSMContext):
+    await state.update_data(phone=message.text)
+
+    data = await state.get_data()
+    name = data['name']
+    phone = data['phone']
+
+    await message.answer(
+        f"Ваши данные:\n"
+        f"- Имя: {name}\n"
+        f"- Телефон: {phone}\n\n"
+        f"Спасибо! Мы скоро с вами свяжемся"
+    )
+
+    await state.clear()
+
+    await set_contact_data(
+        telegram_id=message.from_user.id, 
+        name=name, 
+        phone=phone
+    ) 
