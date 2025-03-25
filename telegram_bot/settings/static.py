@@ -23,7 +23,7 @@ class BackendURL(Enum):
     SET_CONTACT_DATA: str = 'users/leave-request/'
     ADD_CLIENT_CALCULATION: str = 'users/add-calculation/'
 
-    DOMAIN = DEV_DOMAIN
+    DOMAIN = PROD_DOMAIN
 
 
 class Currency(Enum): 
