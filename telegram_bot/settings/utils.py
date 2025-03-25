@@ -6,7 +6,11 @@ from settings.static import Currency, EngineType
 import aiohttp
 from bs4 import BeautifulSoup
 import json
-from settings.static import Currency, CarAge
+from settings.static import (
+    Currency, 
+    CarAge, 
+    CarType,
+)
 from settings.static import BackendURL
 
 
@@ -29,18 +33,14 @@ async def show_options(obj: Union[types.CallbackQuery, types.Message], data_dict
         await obj.answer(text=f'Выберите {exclude_key}', reply_markup=builder.as_markup())
 
 
-def calc_toll(price: int, age: str, volume: int, currency: str, engine_type: str = None):
+async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: str, engine_type: str = None):
     try:
         currency: Currency = Currency(currency)
         engine_type = EngineType(engine_type)
         age: CarAge = CarAge(age)
+        car_type: CarType = CarType(car_type)
 
-        exchange_rates = {
-            'JPY': 0.6258, 
-            'KRW': 0.0665, 
-            'CNY': 11.4265,
-            'EUR': 87.57,
-        }
+        exchange_rates = await get_exchange_rates()
 
         price = float(price)
         volume = int(volume)
@@ -51,125 +51,159 @@ def calc_toll(price: int, age: str, volume: int, currency: str, engine_type: str
         price_rus = round(price * one_rub)
 
         # Таможенное оформление
-        if price_rus < 200000:
+        if price_rus <= 200000:
             tof = 1067
-        elif (price_rus < 450000) and (price_rus >= 200000):
+        elif (price_rus <= 450000) and (price_rus > 200000):
             tof = 2134
-        elif (price_rus < 1200000) and (price_rus >= 450000):
+        elif (price_rus <= 1200000) and (price_rus > 450000):
             tof = 4269
-        elif (price_rus < 2700000) and (price_rus >= 1200000):
+        elif (price_rus <= 2700000) and (price_rus > 1200000):
             tof = 11746
-        elif (price_rus < 4200000) and (price_rus >= 2700000):
+        elif (price_rus <= 4200000) and (price_rus > 2700000):
             tof = 16524
-        elif (price_rus < 5500000) and (price_rus >= 4200000):
+        elif (price_rus <= 5500000) and (price_rus > 4200000):
             tof = 21344
-        elif (price_rus < 7000000) and (price_rus >= 5500000):
+        elif (price_rus <= 7000000) and (price_rus > 5500000):
             tof = 27540
         else:
             tof = 30000
 
-        print(f'Таможенное оформление: {tof}')
+        if car_type == CarType.PASSENGER:
+            # Новые автомобили
+            if age == CarAge.LESS_THAN_3:
+                if volume >= 3500:
+                    yts = 2285200
+                elif (volume >= 3000) and (volume <= 3499):
+                    yts = 1794600
+                else:
+                    yts = 3400
+                europrice = price_rus / exchange_rates['EUR']
 
-        if age == CarAge.LESS_THAN_3:
-            if volume >= 3500:
-                yts = 2285200
-            elif (volume >= 3000) and (volume <= 3499):
-                yts = 1794600
-            else:
-                yts = 3400
-            evroprice = price_rus / exchange_rates['EUR']
-            if engine_type == EngineType.ELECTRO:
-                duty = evroprice * 0.15
-                yts = 20000*0.17
-            elif evroprice < 8500:
-                duty = evroprice * 0.54
-                if duty / volume < 2.5:
-                    duty = volume * 2.5
-            elif (evroprice >= 8500) and (evroprice < 16700):
-                duty = evroprice * 0.48
-                if duty / volume < 3.5:
-                    duty = volume * 3.5
-            elif (evroprice >= 16700) and (evroprice < 42300):
-                duty = evroprice * 0.48
-                if duty / volume < 5.5:
-                    duty = volume * 5.5
-            elif (evroprice >= 42300) and (evroprice < 84500):
-                duty = evroprice * 0.48
-                if duty / volume < 7.5:
-                    duty = volume * 7.5
-            elif (evroprice >= 84500) and (evroprice < 169000):
-                duty = evroprice * 0.48
-                if duty / volume < 15:
-                    duty = volume * 15
-            else:
-                duty = evroprice * 0.48
-                if duty / volume < 20:
-                    duty = volume * 20
-        
-        elif age == CarAge.FROM_3_TO_5:
-            if volume >= 3500:
-                yts = 3004000
-            elif (volume >= 3000) and (volume <= 3499):
-                yts = 2747200
-            else:
-                yts = 5200
+                if engine_type == EngineType.ELECTRO:
+                    duty = europrice * 0.15
+                    yts = 20000*0.17
+                elif europrice < 8500:
+                    duty = europrice * 0.54
+                    if duty / volume < 2.5:
+                        duty = volume * 2.5
+                elif (europrice >= 8500) and (europrice < 16700):
+                    duty = europrice * 0.48
+                    if duty / volume < 3.5:
+                        duty = volume * 3.5
+                elif (europrice >= 16700) and (europrice < 42300):
+                    duty = europrice * 0.48
+                    if duty / volume < 5.5:
+                        duty = volume * 5.5
+                elif (europrice >= 42300) and (europrice < 84500):
+                    duty = europrice * 0.48
+                    if duty / volume < 7.5:
+                        duty = volume * 7.5
+                elif (europrice >= 84500) and (europrice < 169000):
+                    duty = europrice * 0.48
+                    if duty / volume < 15:
+                        duty = volume * 15
+                else:
+                    duty = europrice * 0.48
+                    if duty / volume < 20:
+                        duty = volume * 20
             
-            evroprice = price_rus / exchange_rates['EUR']
+            elif age == CarAge.FROM_3_TO_5:
+                if volume >= 3500:
+                    yts = 3004000
+                elif (volume >= 3000) and (volume <= 3499):
+                    yts = 2747200
+                else:
+                    yts = 5200
+                
+                europrice = price_rus / exchange_rates['EUR']
+                if engine_type == EngineType.ELECTRO:
+                    duty = europrice * 0.15
+                    yts = 20000*0.26
+                elif volume <= 1000:
+                    duty = volume * 1.5
+                elif (volume >= 1001) and (volume <= 1500):
+                    duty = volume * 1.7
+                elif (volume >= 1501) and (volume <= 1800):
+                    duty = volume * 2.5
+                elif (volume >= 1801) and (volume <= 2300):
+                    duty = volume * 2.7
+                elif (volume >= 2301) and (volume <= 3000):
+                    duty = volume * 3
+                else:
+                    duty = volume * 3.6
+            elif age == CarAge.FROM_5_TO_7 or age == CarAge.MORE_THAN_7:
+                if volume >= 3500:
+                    yts = 3004000
+                elif (volume >= 3000) and (volume <= 3499):
+                    yts = 2747200
+                else:
+                    yts = 5200
+
+                europrice = price_rus / exchange_rates['EUR']
+                if engine_type == EngineType.ELECTRO:
+                    duty = europrice * 0.15
+                    yts = 20000*0.26
+                elif volume <= 1000:
+                    duty = volume * 3
+                elif (volume >= 1001) and (volume <= 1500):
+                    duty = volume * 3.2
+                elif (volume >= 1501) and (volume <= 1800):
+                    duty = volume * 3.5
+                elif (volume >= 1801) and (volume <= 2300):
+                    duty = volume * 4.8
+                elif (volume >= 2301) and (volume <= 3000):
+                    duty = volume * 5
+                else:
+                    duty = volume * 5.7
+
+
             if engine_type == EngineType.ELECTRO:
-                duty = evroprice * 0.15
-                yts = 20000*0.26
-            elif volume <= 1000:
-                duty = volume * 1.5
-            elif (volume >= 1001) and (volume <= 1500):
-                duty = volume * 1.7
-            elif (volume >= 1501) and (volume <= 1800):
-                duty = volume * 2.5
-            elif (volume >= 1801) and (volume <= 2300):
-                duty = volume * 2.7
-            elif (volume >= 2301) and (volume <= 3000):
-                duty = volume * 3
+                toll = price_rus * 0.15 + tof + yts
             else:
-                duty = volume * 3.6
-        elif age == CarAge.FROM_5_TO_7 or age == CarAge.MORE_THAN_7:
-            if volume >= 3500:
-                yts = 3004000
-            elif (volume >= 3000) and (volume <= 3499):
-                yts = 2747200
-            else:
-                yts = 5200
+                toll = duty * exchange_rates['EUR'] + tof + yts
 
-            evroprice = price_rus / exchange_rates['EUR']
-            if engine_type == EngineType.ELECTRO:
-               duty = evroprice * 0.15
-               yts = 20000*0.26
-            elif volume <= 1000:
-                duty = volume * 3
-            elif (volume >= 1001) and (volume <= 1500):
-                duty = volume * 3.2
-            elif (volume >= 1501) and (volume <= 1800):
-                duty = volume * 3.5
-            elif (volume >= 1801) and (volume <= 2300):
-                duty = volume * 4.8
-            elif (volume >= 2301) and (volume <= 3000):
-                duty = volume * 5
-            else:
-                duty = volume * 5.7
+            res_rus = toll
 
+            print(f'Таможенное оформление: {tof}')
+            print(f'Утилизационный сбор: {yts}')
+            print(f'Единая ставка: {duty}')
+            print(f'Итого: {res_rus}')
 
-        if engine_type == EngineType.ELECTRO:
-            toll = price_rus * 0.15 + tof + yts
-        else:
-            toll = duty * exchange_rates['EUR'] + tof + yts
+            return round(toll)
+        
+        elif car_type in (CarType.QUAD_BIKE, CarType.SNOWMOBILE): 
+            duty_percent = 0.05 
+            nds_percent = 0.2 
+            recycling_collection = 120750 
 
-        res_rus = toll
+            duty = price_rus * duty_percent 
+            nds = price_rus * nds_percent 
 
-        print(f'Утилизационный сбор: {yts}')
-        print(f'Единая ставка: {duty}')
-        print(f'Итого: {res_rus}')
+            result = duty + nds + recycling_collection + tof
 
-        return round(toll)
+            return result
+
+        
     except Exception as e:
         print(f'Ошибка в calc_toll: {str(e)}')
+
+
+async def get_exchange_rates() -> dict:
+    url = "http://193.164.149.51/currencies/get-exchange-rates-from-cbr/"
+    
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                data = await response.json()
+                exchange_rates = {
+                    currency: info["exchange_rate"]
+                    for currency, info in data.items()
+                    if currency in ['JPY', 'KRW', 'CNY', 'EUR', 'USD']
+                }
+                print(exchange_rates)
+                return exchange_rates
+            else:
+                raise Exception(f"Не удалось получить курсы валют. Код ответа: {response.status}")
 
 
 def get_commissions(currency: Currency) -> tuple[float, float, float, float, float, float]:

@@ -118,25 +118,25 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
     age = callback.data.split('_')[-1]
     await state.update_data(age=age)
     data = await state.get_data()
-    print(data)
-    duty = calc_toll(
+    duty = await calc_toll(
         price=data['cost'], 
         age=data['age'], 
         volume=data['engine_volume'], 
         currency=data['currency'], 
+        car_type=data['car_type'],
         engine_type=data['engine_type'], 
     )
-    contacts_buttons = keyboards.contacts_buttons
-    keyboard = types.InlineKeyboardMarkup(inline_keyboard=contacts_buttons)
     await callback.message.answer(
+        f"Тип: {data['car_type']}\n"
         f"Стоимость: {format_float(data['cost'])} {data['currency']}\n"
         f"Объём двигателя: {data['engine_volume']} см³\n"
         f"Масса: {data['weight']} тонн\n"
         f"Возраст: {data['age']}\n"
         f"Тип двигателя: {data['engine_type']}\n"
-        f"Размер пошлины: {format_float(duty)} рублей\n\n"
-        f"Данный расчёт является приблизительным, свяжитесь с нами для уточнения деталей", 
-        reply_markup=keyboard
+        f"Итоговая сумма: {format_float(duty)} рублей\n\n"
+        f"Данный расчёт является приблизительным, свяжитесь с нами для уточнения деталей\n\n"
+        f"Телефон: +7 (111) 111-11-11\n"
+        f"Email: example@example.com"
     )
 
     await add_client_calculation(

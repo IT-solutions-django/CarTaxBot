@@ -4,6 +4,7 @@ from settings.static import (
     ClientType,
     Currency,
     CarAge,
+    CarType,
 )
 
 
@@ -36,6 +37,11 @@ car_type_buttons = [
     [types.InlineKeyboardButton(text='Легковой', callback_data='car_type_легковой')],
     [types.InlineKeyboardButton(text='Снегоход', callback_data='car_type_снегоход')],
     [types.InlineKeyboardButton(text='Квадроцикл', callback_data='car_type_квадроцикл')],
+]
+
+car_type_buttons = [
+    [types.InlineKeyboardButton(text=f'{car_type.value.capitalize()}', callback_data=f'car_type_{car_type.value}')]
+    for car_type in CarType
 ]
 
 age_buttons = [
