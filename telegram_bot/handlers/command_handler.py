@@ -30,4 +30,13 @@ async def send_welcome(message: types.Message, state=FSMContext) -> None:
     await message.answer("Введите ваше имя (например, Максим):")
 
 
-# Только для тестов
+@router.message(Command("about"))
+async def send_welcome(message: types.Message, state=FSMContext) -> None:
+    await message.answer(
+        f"Информация о компании\n\n"
+        f"текст\n"
+        f"текст\n"
+        f"текст\n\n"
+        f"Телефон: +7 (111) 111-11-11\n"
+        f"Email: example@example.com"
+    )

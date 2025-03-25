@@ -23,6 +23,8 @@ class BackendURL(Enum):
     SET_CONTACT_DATA: str = 'users/leave-request/'
     ADD_CLIENT_CALCULATION: str = 'users/add-calculation/'
 
+    GET_EXCHANGE_RATES: str = 'http://193.164.149.51/currencies/get-exchange-rates-from-cbr/'
+
     DOMAIN = PROD_DOMAIN
 
 
@@ -56,3 +58,9 @@ class CarAge(Enum):
 
 class ContactData(Enum): 
     PHONE = '+7 (111) 111-11-11'
+
+
+class CarType(Enum): 
+    PASSENGER = 'легковой' 
+    SNOWMOBILE = 'снегоход' 
+    QUAD_BIKE = 'квадроцикл'
