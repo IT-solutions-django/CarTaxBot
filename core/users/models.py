@@ -11,14 +11,13 @@ class ClientStatus(models.Model):
     def __str__(self):
         return f'{self.name}'
     
-    def get_primary_contact_status(): 
-        return ClientStatus.objects.filter(name='Написал боту').first()
+    def get_start_status(): 
+        status, _ = ClientStatus.objects.get_or_create(name='start')
+        return status
     
-    def get_calculated_tall_status(): 
-        return ClientStatus.objects.filter(name='Рассчитал пошлину').first()
-    
-    def get_left_contacts_status(): 
-        return ClientStatus.objects.filter(name='Оставил контактные данные').first()
+    def get_calc_status(): 
+        status, _ = ClientStatus.objects.filter(name='calc')
+        return status
 
 
 class Client(models.Model): 
@@ -50,7 +49,13 @@ class FeedbackRequest(models.Model):
 
 
 class ClientCalculation(models.Model): 
-    created_at = models.DateTimeField('Дата и время создания', auto_now_add=True, max_length=50)
+    client = models.ForeignKey(verbose_name='Клиент', to=Client, on_delete=models.CASCADE)
+    created_at = models.DateTimeField('Дата и время создания', auto_now_add=True, max_length=50) 
+    price = models.DecimalField('Стоимость', max_digits=10, decimal_places=2)  
+    age = models.CharField('Возраст', max_length=20)  
+    volume = models.FloatField('Объём двигателя')  
+    currency = models.CharField('Валюта', max_length=3)  
+    engine_type = models.CharField('Тип двигателя', max_length=50)  
 
     class Meta: 
         verbose_name = 'расчёт'

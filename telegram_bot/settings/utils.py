@@ -29,7 +29,7 @@ async def show_options(obj: Union[types.CallbackQuery, types.Message], data_dict
         await obj.answer(text=f'Выберите {exclude_key}', reply_markup=builder.as_markup())
 
 
-def calc_toll(price: int, age: int, volume: int, currency: str, engine_type: str = None):
+def calc_toll(price: int, age: str, volume: int, currency: str, engine_type: str = None):
     try:
         currency: Currency = Currency(currency)
         engine_type = EngineType(engine_type)
@@ -250,6 +250,39 @@ async def set_contact_data(telegram_id: int, name: str = None, phone: str = None
             elif response.status == 400:
                 response_data = await response.json()
                 print(f"Ошибка: {response_data.get('error', 'Неизвестная ошибка')}")
+            else:
+                print(f"Неизвестная ошибка: {response.status}")
+
+
+async def add_client_calculation(
+    telegram_id: int, price: float, age: str, engine_volume: float, currency: str, engine_type: str
+) -> None:
+    url = f'http://{back_domain}:8000/{BackendURL.ADD_CLIENT_CALCULATION.value}'  
+    headers = {
+        'Content-Type': 'application/json',
+    }
+    data = {
+        'telegram_id': telegram_id,
+        'price': price,
+        'age': age,
+        'engine_volume': engine_volume,
+        'currency': currency,
+        'engine_type': engine_type,
+    }
+
+    print('add_client_calculation')
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, json=data) as response:
+            if response.status in [200, 201]:
+                response_data = await response.json()
+                print(f"Расчёт успешно добавлен, ID: {response_data.get('calculation_id')}")
+            elif response.status == 400:
+                response_data = await response.json()
+                print(f"Ошибка: {response_data.get('error', 'Неизвестная ошибка')}")
+            elif response.status == 404:
+                response_data = await response.json()
+                print(f"Ошибка: {response_data.get('error', 'Клиент не найден')}")
             else:
                 print(f"Неизвестная ошибка: {response.status}")
 

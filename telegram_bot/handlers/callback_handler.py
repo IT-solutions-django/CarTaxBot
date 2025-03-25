@@ -6,7 +6,12 @@ from settings.utils import show_options
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from .state import CarDutyCalculation, ClientContacts
-from settings.utils import calc_toll, set_contact_data, format_float
+from settings.utils import (
+    calc_toll, 
+    set_contact_data, 
+    format_float, 
+    add_client_calculation,
+)
 from settings.static import EngineType, ClientType
 from keyboards import keyboards
 from enum import Enum
@@ -64,9 +69,9 @@ async def ask_next_step(callback: types.CallbackQuery, state: FSMContext):
     engine_type = callback.data.split('_')[-1]
     await state.update_data(engine_type=engine_type)
     
-    if engine_type == EngineType.HYBRID_CONSISTENT.value:
+    if engine_type in (EngineType.HYBRID_CONSISTENT.value, EngineType.ELECTRO.value):
         await state.set_state(CarDutyCalculation.power)
-        await callback.message.answer("Введите мощность двигателя в кВт (например, 110):")
+        await callback.message.answer("Введите 30-минутную мощность двигателя в кВт (например, 60):")
     else:
         await state.set_state(CarDutyCalculation.weight)
         await callback.message.answer("Введите массу автомобиля в тоннах (например, 1.5):")
@@ -95,6 +100,7 @@ async def ask_client_type(message: types.Message, state: FSMContext):
         client_type_buttons = keyboards.client_type_buttons
         keyboard = types.InlineKeyboardMarkup(inline_keyboard=client_type_buttons)
         await message.answer("Кто ввозит автомобиль:", reply_markup=keyboard)
+
 
 @router.callback_query(CarDutyCalculation.client_type, F.data.startswith('client_type_'))
 async def ask_age(callback: types.CallbackQuery, state: FSMContext):
@@ -132,6 +138,16 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
         f"Данный расчёт является приблизительным, свяжитесь с нами для уточнения деталей", 
         reply_markup=keyboard
     )
+
+    await add_client_calculation(
+        telegram_id=callback.from_user.id, 
+        price=data['cost'], 
+        age=data['age'], 
+        engine_volume=data['engine_volume'], 
+        currency=data['currency'], 
+        engine_type=data['engine_type'], 
+    )
+
     await state.clear()
     await callback.answer()
 

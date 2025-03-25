@@ -8,6 +8,7 @@ from .models import (
     Client, 
     ClientStatus, 
     FeedbackRequest, 
+    ClientCalculation,
 )
 
 
@@ -21,7 +22,7 @@ class CreateClientView(View):
             if not telegram_id:
                 return JsonResponse({'error': 'Укажите telegram_id'}, status=400)
             
-            status = ClientStatus.get_primary_contact_status()
+            status = ClientStatus.get_start_status()
             client, created = Client.objects.get_or_create(
                 telegram_id=telegram_id,
                 defaults={
@@ -72,6 +73,56 @@ class SetContactDataView(View):
             
             return JsonResponse({'message': 'Контактные данные клиента успешно добавлены', 'client_id': client.id}, status=201)
         
+        except json.JSONDecodeError as e:
+            print(str(e))
+            return JsonResponse({'error': 'Некорректный JSON'}, status=400)
+        except Exception as e:
+            print(str(e))
+            return JsonResponse({'error': str(e)}, status=500)
+        
+
+@method_decorator(csrf_exempt, name='dispatch')
+class AddClientCalculationView(View):
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            telegram_id = data.get('telegram_id')
+            price = data.get('price')
+            age = data.get('age')
+            volume = data.get('engine_volume')
+            currency = data.get('currency')
+            engine_type = data.get('engine_type')
+
+            print(telegram_id, price, age, volume, currency, engine_type)
+
+            if not telegram_id:
+                return JsonResponse({'error': 'Укажите telegram_id'}, status=400)
+            if not price:
+                return JsonResponse({'error': 'Укажите price'}, status=400)
+            if not age:
+                return JsonResponse({'error': 'Укажите age'}, status=400)
+            if not volume:
+                return JsonResponse({'error': 'Укажите engine_volume'}, status=400)
+            if not currency:
+                return JsonResponse({'error': 'Укажите currency'}, status=400)
+            if not engine_type:
+                return JsonResponse({'error': 'Укажите engine_type'}, status=400)
+
+            client = Client.objects.filter(telegram_id=telegram_id).first()
+            if not client:
+                return JsonResponse({'error': 'Клиент с таким telegram_id не найден'}, status=404)
+
+            calculation = ClientCalculation.objects.create(
+                client=client,
+                price=price,
+                age=age,
+                volume=volume,
+                currency=currency,
+                engine_type=engine_type
+            )
+
+            return JsonResponse({'message': 'Расчёт успешно добавлен', 'calculation_id': calculation.id}, status=201)
+
         except json.JSONDecodeError as e:
             print(str(e))
             return JsonResponse({'error': 'Некорректный JSON'}, status=400)

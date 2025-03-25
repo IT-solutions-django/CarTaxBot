@@ -1,5 +1,10 @@
 from django.contrib import admin
-from .models import Client, ClientStatus, ClientCalculation, FeedbackRequest
+from .models import (
+    Client, 
+    ClientStatus, 
+    ClientCalculation, 
+    FeedbackRequest,
+)
 
 
 @admin.register(Client) 
@@ -16,3 +21,8 @@ class ClientStatusAdmin(admin.ModelAdmin):
 class FeedbackRequestAdmin(admin.ModelAdmin): 
     list_display = ['client', 'name', 'phone', 'is_closed']
     list_filter = ['is_closed']
+
+
+@admin.register(ClientCalculation) 
+class ClientCalculationAdmin(admin.ModelAdmin): 
+    list_display = ['client', 'age', 'volume', 'currency', 'engine_type', 'created_at', 'price']
