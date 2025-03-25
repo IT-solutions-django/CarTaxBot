@@ -2,7 +2,17 @@ from enum import Enum
 
 
 class Message(Enum): 
-    START_MESSAGE: str = 'Этот бот предназначен для расчёта стоимости автомобиля при его растаможке'
+    START_MESSAGE: str = (
+        "🚗 *Бот для расчёта растаможки автомобиля*\n\n"
+        "Рассчитайте примерную стоимость таможенных платежей для вашего авто. "
+        "Просто введите параметры или воспользуйтесь кнопками ниже."
+    )
+    CONTACT_MESSAGE: str = (
+        "📞 *Свяжитесь с нами!*\n\n"
+        "• Телефон: +7 (123) 456-78-90\n"
+        "• Почта: customs@example.com\n"
+        "• Работаем: Пн-Пт, 9:00–18:00"
+    )
 
 
 class BackendURL(Enum):
@@ -10,7 +20,7 @@ class BackendURL(Enum):
     DEV_DOMAIN: str = '127.0.0.1' 
     DOMAIN = DEV_DOMAIN
     ADD_CLIENT: str = 'users/add-client/' 
-    SET_CONTACT_DATA: str = 'users/set-contact-data/'
+    SET_CONTACT_DATA: str = 'users/leave-request/'
 
 
 class Currency(Enum): 
@@ -25,4 +35,21 @@ class EngineType(Enum):
     PETROL: str = 'бензин' 
     DIESEL: str = 'дизель' 
     ELECTRO: str = 'электро' 
-    HYBRID: str = 'гибрид'
+    HYBRID_PARALLEL: str = 'гибрид параллельный'
+    HYBRID_CONSISTENT: str = 'гибрид последовательный'
+
+
+class ClientType(Enum):
+    PHYSICAL = 'физическое лицо' 
+    JURIDICAL = 'юридическое лицо'
+
+
+class CarAge(Enum): 
+    LESS_THAN_3 = 'меньше 3-х лет' 
+    FROM_3_TO_5 = '3-5 лет'
+    FROM_5_TO_7 = '5-7 лет' 
+    MORE_THAN_7 = 'больше 7 лет'
+
+
+class ContactData(Enum): 
+    PHONE = '+7 (111) 111-11-11'

@@ -3,13 +3,17 @@ from dotenv import load_dotenv
 import asyncio
 import os
 from handlers import command_handler, callback_handler
+from aiogram.client.default import DefaultBotProperties
 
 
 load_dotenv()
 
 
 API_TOKEN: str = os.getenv('API_TOKEN')
-bot: Bot = Bot(token=API_TOKEN)
+bot: Bot = Bot(
+    token=API_TOKEN, 
+    default=DefaultBotProperties(parse_mode='Markdown')
+)
 dp: Dispatcher = Dispatcher()
 
 

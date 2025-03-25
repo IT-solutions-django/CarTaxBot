@@ -3,11 +3,13 @@ from aiogram.fsm.context import FSMContext
 
 
 class CarDutyCalculation(StatesGroup):
+    car_type = State() 
+    currency = State()
     cost = State()
     engine_volume = State()
-    currency = State()
     power = State()
     weight = State()
+    client_type = State()
     age = State()
     engine_type = State()
 

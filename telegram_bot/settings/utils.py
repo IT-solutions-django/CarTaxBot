@@ -6,7 +6,7 @@ from settings.static import Currency, EngineType
 import aiohttp
 from bs4 import BeautifulSoup
 import json
-from settings.static import Currency
+from settings.static import Currency, CarAge
 from settings.static import BackendURL
 
 
@@ -33,7 +33,7 @@ def calc_toll(price: int, age: int, volume: int, currency: str, engine_type: str
     try:
         currency: Currency = Currency(currency)
         engine_type = EngineType(engine_type)
-        delivery, our_commission, broker, commission_sanctions, delivery_sanctions, insurance = get_commissions(currency=currency)
+        age: CarAge = CarAge(age)
 
         exchange_rates = {
             'JPY': 0.6258, 
@@ -44,23 +44,11 @@ def calc_toll(price: int, age: int, volume: int, currency: str, engine_type: str
 
         price = float(price)
         volume = int(volume)
-        age = int(age)
-        commision_sanctions_ = 0
         insurance_rus = 0
 
         # Перевод цены в рубли
         one_rub = exchange_rates[currency.value]
         price_rus = round(price * one_rub)
-
-        if currency == Currency.JPY:             
-            # Санкционные авто
-            if (volume > 1800 or engine_type == EngineType.HYBRID or engine_type == EngineType.ELECTRO):
-                commision_sanctions_ = price * commission_sanctions / 100
-                price_rus = round((price + commision_sanctions_) * one_rub)
-                delivery = delivery_sanctions
-            else:
-                price_rus = round(price * one_rub)
-                insurance_rus = round(insurance * one_rub)
 
         # Таможенное оформление
         if price_rus < 200000:
@@ -82,8 +70,7 @@ def calc_toll(price: int, age: int, volume: int, currency: str, engine_type: str
 
         print(f'Таможенное оформление: {tof}')
 
-        age 
-        if age <= 3:
+        if age == CarAge.LESS_THAN_3:
             if volume >= 3500:
                 yts = 2285200
             elif (volume >= 3000) and (volume <= 3499):
@@ -119,7 +106,7 @@ def calc_toll(price: int, age: int, volume: int, currency: str, engine_type: str
                 if duty / volume < 20:
                     duty = volume * 20
         
-        elif (age > 3) and (age <= 5):
+        elif age == CarAge.FROM_3_TO_5:
             if volume >= 3500:
                 yts = 3004000
             elif (volume >= 3000) and (volume <= 3499):
@@ -143,7 +130,7 @@ def calc_toll(price: int, age: int, volume: int, currency: str, engine_type: str
                 duty = volume * 3
             else:
                 duty = volume * 3.6
-        elif age > 5:
+        elif age == CarAge.FROM_5_TO_7 or age == CarAge.MORE_THAN_7:
             if volume >= 3500:
                 yts = 3004000
             elif (volume >= 3000) and (volume <= 3499):
@@ -174,7 +161,7 @@ def calc_toll(price: int, age: int, volume: int, currency: str, engine_type: str
         else:
             toll = duty * exchange_rates['EUR'] + tof + yts
 
-        res_rus = toll  + (delivery*one_rub) + our_commission + broker + insurance_rus
+        res_rus = toll
 
         print(f'Утилизационный сбор: {yts}')
         print(f'Единая ставка: {duty}')
@@ -243,7 +230,7 @@ async def add_new_client(telegram_id: int, name: str = None, phone: str = None) 
 
 
 async def set_contact_data(telegram_id: int, name: str = None, phone: str = None) -> None:
-    url = f'http://{back_domain}:8000/users/set-contact-data/'  
+    url = f'http://{back_domain}:8000/{BackendURL.SET_CONTACT_DATA.value}'  
     headers = {
         'Content-Type': 'application/json',
     }
@@ -259,9 +246,15 @@ async def set_contact_data(telegram_id: int, name: str = None, phone: str = None
         async with session.post(url, headers=headers, data=json.dumps(data)) as response:
             if response.status == 201 or 200:
                 response_data = await response.json()
-                print(f"Контактные данные успешно добавлены: {response_data['message']}, Client ID: {response_data['client_id']}")
+                print(f"Контактные данные успешно добавлены")
             elif response.status == 400:
                 response_data = await response.json()
-                print(f"Ошибка: {response_data.get('error', 'Unknown error')}")
+                print(f"Ошибка: {response_data.get('error', 'Неизвестная ошибка')}")
             else:
                 print(f"Неизвестная ошибка: {response.status}")
+
+
+def format_float(number: float | str) -> str: 
+    result = f"{number:_}".replace("_", " ") 
+    print(result)
+    return result

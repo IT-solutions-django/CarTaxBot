@@ -4,7 +4,11 @@ from django.views import View
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from .models import Client, ClientStatus
+from .models import (
+    Client, 
+    ClientStatus, 
+    FeedbackRequest, 
+)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -46,6 +50,8 @@ class SetContactDataView(View):
             name = data.get('name')
             phone = data.get('phone')
 
+            print(telegram_id, name, phone)
+
             if not name:
                 return JsonResponse({'error': 'Укажите name'}, status=400)
             if not phone:
@@ -57,10 +63,17 @@ class SetContactDataView(View):
             client.phone = phone 
             client.status = status 
             client.save()
+
+            feedback_request = FeedbackRequest.objects.create(
+                client=client,
+                name=name,
+                phone=phone
+            )
             
             return JsonResponse({'message': 'Контактные данные клиента успешно добавлены', 'client_id': client.id}, status=201)
         
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            print(str(e))
             return JsonResponse({'error': 'Некорректный JSON'}, status=400)
         except Exception as e:
             print(str(e))

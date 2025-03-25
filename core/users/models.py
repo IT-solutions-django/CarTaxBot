@@ -33,6 +33,20 @@ class Client(models.Model):
 
     def __str__(self):
         return f'Клиент {self.telegram_id}'
+    
+
+class FeedbackRequest(models.Model): 
+    name = models.CharField('Имя', null=True, blank=True, max_length=50) 
+    phone = models.CharField('Телефон', null=True, blank=True, max_length=50)
+    client = models.ForeignKey(verbose_name='Клиент', to=Client, on_delete=models.CASCADE)
+    is_closed = models.BooleanField('Обработано', default=False)
+
+    class Meta: 
+        verbose_name = 'заявка'
+        verbose_name_plural = 'заявки'
+
+    def __str__(self):
+        return f'Клиент {self.client} | {self.name} | {self.phone}'
 
 
 class ClientCalculation(models.Model): 
