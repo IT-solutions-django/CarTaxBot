@@ -9,9 +9,9 @@ from settings.static import (
 
 
 buttons_start = [
-    [types.InlineKeyboardButton(text='Расчёт пошлины', callback_data='calculate_duty')],
-    [types.InlineKeyboardButton(text='О компании', callback_data='about_company')],
-    [types.InlineKeyboardButton(text='Связаться', callback_data='contact')],
+    [types.InlineKeyboardButton(text='Рассчитать пошлину', callback_data='calc')],
+    [types.InlineKeyboardButton(text='Получить курсы валют', callback_data='currencies')],
+    [types.InlineKeyboardButton(text='Оставить заявку', callback_data='feedback')],
 ]
 
 

@@ -14,12 +14,12 @@ from settings.utils import (
 )
 from settings.static import EngineType, ClientType
 from keyboards import keyboards
-from enum import Enum
+from settings.utils import get_exchange_rates
 
 router = Router()
 
 
-@router.callback_query(F.data == 'calculate_duty')
+@router.callback_query(F.data == 'calc')
 async def ask_currency(callback: types.CallbackQuery, state: FSMContext):
     await state.set_state(CarDutyCalculation.car_type)
     car_type_buttons = keyboards.car_type_buttons
@@ -154,7 +154,7 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
 
 # Заявка
 
-@router.callback_query(F.data == 'contact')
+@router.callback_query(F.data == 'feedback')
 async def start_contact_collection(callback: types.CallbackQuery, state: FSMContext):
     await state.set_state(ClientContacts.name)
     await callback.message.answer("Введите ваше имя (например, Максим):")
@@ -188,3 +188,7 @@ async def process_phone_valid(message: types.Message, state: FSMContext):
 @router.message(ClientContacts.phone)
 async def process_phone_invalid(message: types.Message):
     await message.answer("Пожалуйста, введите номер в правильном формате (например, 71234567890 или 81234567890)")
+
+
+
+# Получить курсы валют

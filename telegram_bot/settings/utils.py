@@ -47,7 +47,7 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
         insurance_rus = 0
 
         # Перевод цены в рубли
-        one_rub = exchange_rates[currency.value]
+        one_rub = exchange_rates[currency.value]['exchange_rate']
         price_rus = round(price * one_rub)
 
         # Таможенное оформление
@@ -77,7 +77,7 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
                     yts = 1794600
                 else:
                     yts = 3400
-                europrice = price_rus / exchange_rates['EUR']
+                europrice = price_rus / exchange_rates['EUR']['exchange_rate']
 
                 if engine_type == EngineType.ELECTRO:
                     duty = europrice * 0.15
@@ -115,7 +115,7 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
                 else:
                     yts = 5200
                 
-                europrice = price_rus / exchange_rates['EUR']
+                europrice = price_rus / exchange_rates['EUR']['exchange_rate']
                 if engine_type == EngineType.ELECTRO:
                     duty = europrice * 0.15
                     yts = 20000*0.26
@@ -139,7 +139,7 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
                 else:
                     yts = 5200
 
-                europrice = price_rus / exchange_rates['EUR']
+                europrice = price_rus / exchange_rates['EUR']['exchange_rate']
                 if engine_type == EngineType.ELECTRO:
                     duty = europrice * 0.15
                     yts = 20000*0.26
@@ -160,7 +160,7 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
             if engine_type == EngineType.ELECTRO:
                 toll = price_rus * 0.15 + tof + yts
             else:
-                toll = duty * exchange_rates['EUR'] + tof + yts
+                toll = duty * exchange_rates['EUR']['exchange_rate'] + tof + yts
 
             res_rus = toll
 
@@ -196,7 +196,10 @@ async def get_exchange_rates() -> dict:
             if response.status == 200:
                 data = await response.json()
                 exchange_rates = {
-                    currency: info["exchange_rate"]
+                    currency: {
+                        'exchange_rate': info['exchange_rate'], 
+                        'updated_at': info['updated_at']
+                    }
                     for currency, info in data.items()
                     if currency in ['JPY', 'KRW', 'CNY', 'EUR', 'USD']
                 }
