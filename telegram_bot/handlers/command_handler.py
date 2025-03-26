@@ -46,10 +46,7 @@ async def send_welcome(message: types.Message, state=FSMContext) -> None:
 async def start_contact_collection(message: types.Message):
     exchange_rates: dict[dict] = await get_exchange_rates() 
 
-    print(exchange_rates)
-
     text = '📈 Актуальные курсы валют:\n\n'
-
     all_dates = []
     for currency_name, currency_data in exchange_rates.items(): 
         text += f"{currency_name} - {currency_data['exchange_rate']} ₽\n"

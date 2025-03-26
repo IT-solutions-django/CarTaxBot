@@ -12,12 +12,36 @@ from settings.utils import (
     format_float, 
     add_client_calculation,
 )
-from settings.static import EngineType, ClientType, CarType
+from settings.static import EngineType, ClientType, CarType, Currency
 from keyboards import keyboards
 from settings.utils import get_exchange_rates
+from datetime import datetime
 
 router = Router()
 
+
+# Курсы валют
+
+@router.callback_query(F.data == 'currencies')
+async def ask_currency(callback: types.CallbackQuery):
+    exchange_rates: dict[dict] = await get_exchange_rates() 
+
+    text = '📈 Актуальные курсы валют:\n\n'
+    all_dates = []
+    for currency_name, currency_data in exchange_rates.items(): 
+        text += f"{currency_name} - {currency_data['exchange_rate']} ₽\n"
+        updated_at: datetime = datetime.strptime(currency_data['updated_at'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        all_dates.append(updated_at.date())
+
+    if all(d == all_dates[0] for d in all_dates):
+        common_date = all_dates[0].strftime('%d.%m.%Y')
+        text += f"\n✅ Все данные актуальны на {common_date}\nИсточник - Центральный банк РФ"
+
+    await callback.message.answer(text)
+    await callback.answer()
+
+
+# Расчёт пошлины
 
 @router.callback_query(F.data == 'calc')
 async def ask_currency(callback: types.CallbackQuery, state: FSMContext):
@@ -160,14 +184,15 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
         f"Тип двигателя: {data['engine_type']}\n"
     ) 
     print(duty_data)
-    duty, yts, tof, commission, nds, excise, result = (
+    duty, yts, tof, commission, nds, excise, result, exchange_rates = (
         duty_data.get('duty'),
         duty_data.get('yts'),
         duty_data.get('tof'),
         duty_data.get('commission'),
         duty_data.get('nds'),
         duty_data.get('excise'),
-        duty_data.get('result')
+        duty_data.get('result'), 
+        duty_data.get('exchange_rates'),
     )
     message_text += (
         f"\n*Результаты расчёта*:\n"
@@ -179,8 +204,12 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
         message_text += f"НДС: {format_float(nds)} ₽\n"
     if excise: 
         message_text += f"Акциз: {format_float(excise)} ₽\n"
+    message_text += f"Комиссия компании: {format_float(commission)} ₽\n\n"
+    if data['currency'] != Currency.RUB.value: 
+        currency = data['currency']
+        updated_at = datetime.strptime(exchange_rates[currency]['updated_at'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        message_text += f"Курс на {updated_at.strftime('%d.%m.%Y')}: 1 {currency} = {exchange_rates[currency]['exchange_rate']} ₽\n\n"
     message_text += (
-        f"Комиссия компании: {format_float(commission)} ₽\n\n"
         f"*Итоговая сумма: {format_float(result)} ₽*\n\n"
         "Данный расчёт является приблизительным, свяжитесь с нами для уточнения деталей\n\n"
         "*Телефон: +7 (111) 111-11-11*\n"
