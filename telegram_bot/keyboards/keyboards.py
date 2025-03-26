@@ -9,9 +9,13 @@ from settings.static import (
 
 
 buttons_start = [
-    [types.InlineKeyboardButton(text='Расчёт пошлины', callback_data='calculate_duty')],
-    [types.InlineKeyboardButton(text='О компании', callback_data='about_company')],
-    [types.InlineKeyboardButton(text='Связаться', callback_data='contact')],
+    [types.InlineKeyboardButton(text='Рассчитать пошлину', callback_data='calc')],
+    [types.InlineKeyboardButton(text='Получить курсы валют', callback_data='currencies')],
+    [types.InlineKeyboardButton(text='Оставить заявку', callback_data='feedback')],
+]
+
+feedback_button = [
+   [types.InlineKeyboardButton(text='Оставить заявку', callback_data='feedback')],
 ]
 
 
@@ -31,17 +35,12 @@ currency_buttons = [
     [types.InlineKeyboardButton(text='Вона', callback_data='currency_KRW')],
     [types.InlineKeyboardButton(text='Доллар', callback_data='currency_USD')],
     [types.InlineKeyboardButton(text='Евро', callback_data='currency_EUR')],
-]
-
-car_type_buttons = [
-    [types.InlineKeyboardButton(text='Легковой', callback_data='car_type_легковой')],
-    [types.InlineKeyboardButton(text='Снегоход', callback_data='car_type_снегоход')],
-    [types.InlineKeyboardButton(text='Квадроцикл', callback_data='car_type_квадроцикл')],
+    [types.InlineKeyboardButton(text='Рубль', callback_data='currency_RUB')],
 ]
 
 car_type_buttons = [
     [types.InlineKeyboardButton(text=f'{car_type.value.capitalize()}', callback_data=f'car_type_{car_type.value}')]
-    for car_type in CarType
+    for car_type in CarType if not car_type == CarType.CARGO
 ]
 
 age_buttons = [
