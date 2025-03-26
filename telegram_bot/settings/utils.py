@@ -33,7 +33,14 @@ async def show_options(obj: Union[types.CallbackQuery, types.Message], data_dict
         await obj.answer(text=f'Выберите {exclude_key}', reply_markup=builder.as_markup())
 
 
-async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: str, engine_type: str = None):
+async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: str, power_kw: float = None, engine_type: str = None) -> dict:
+    """
+    duty - пошлина
+    tof - таможенное оформление
+    yts - утилизационный сбор
+    nds - НДС 
+    excise - акциз
+    """
     try:
         currency: Currency = Currency(currency)
         engine_type = EngineType(engine_type)
@@ -44,10 +51,14 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
 
         price = float(price)
         volume = int(volume)
-        insurance_rus = 0
+        nds = None
+        excise = None
 
         # Перевод цены в рубли
-        one_rub = exchange_rates[currency.value]['exchange_rate']
+        if currency == Currency.RUB:
+            one_rub = 1
+        else:
+            one_rub = exchange_rates[currency.value]['exchange_rate']
         price_rus = round(price * one_rub)
 
         # Таможенное оформление
@@ -68,7 +79,7 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
         else:
             tof = 30000
 
-        if car_type == CarType.PASSENGER:
+        if car_type == CarType.PASSENGER or car_type == CarType.CARGO:
             # Новые автомобили
             if age == CarAge.LESS_THAN_3:
                 if volume >= 3500:
@@ -86,19 +97,19 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
                     duty = europrice * 0.54
                     if duty / volume < 2.5:
                         duty = volume * 2.5
-                elif (europrice >= 8500) and (europrice < 16700):
-                    duty = europrice * 0.48
+                elif (europrice > 8500) and (europrice <= 16700):
+                    duty = europrice * 0.48 
                     if duty / volume < 3.5:
                         duty = volume * 3.5
-                elif (europrice >= 16700) and (europrice < 42300):
+                elif (europrice > 16700) and (europrice <= 42300):
                     duty = europrice * 0.48
                     if duty / volume < 5.5:
                         duty = volume * 5.5
-                elif (europrice >= 42300) and (europrice < 84500):
+                elif (europrice > 42300) and (europrice <= 84500):
                     duty = europrice * 0.48
                     if duty / volume < 7.5:
                         duty = volume * 7.5
-                elif (europrice >= 84500) and (europrice < 169000):
+                elif (europrice > 84500) and (europrice <= 169000):
                     duty = europrice * 0.48
                     if duty / volume < 15:
                         duty = volume * 15
@@ -157,31 +168,62 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
                     duty = volume * 5.7
 
 
-            if engine_type == EngineType.ELECTRO:
-                toll = price_rus * 0.15 + tof + yts
-            else:
-                toll = duty * exchange_rates['EUR']['exchange_rate'] + tof + yts
+            if engine_type in (EngineType.ELECTRO, EngineType.HYBRID_CONSISTENT):
+                duty = price_rus * 0.15
+                nds_percent = 0.2
 
-            res_rus = toll
+                if power_kw is not None:
+                    if power_kw <= 67.5:
+                        excise = 0
+                    elif power_kw <= 112.5:
+                        excise = (power_kw / 0.75) * 61
+                    elif power_kw <= 150:
+                        excise = (power_kw / 0.75) * 583
+                    elif power_kw <= 225:
+                        excise = (power_kw / 0.75) * 955
+                    elif power_kw <= 300:
+                        excise = (power_kw / 0.75) * 1628
+                    elif power_kw <= 375:
+                        excise = (power_kw / 0.75) * 1685
+                    else:
+                        excise = (power_kw / 0.75) * 1740 
+                else: 
+                    raise Exception('Для электромобиля не указана мощность')
+
+                
+                nds = (price_rus + duty + excise) * nds_percent
+                toll = duty + tof + yts + nds + excise
+            else:
+                duty = duty * exchange_rates['EUR']['exchange_rate']
+                toll = duty + tof + yts
+
+            result = toll
 
             print(f'Таможенное оформление: {tof}')
             print(f'Утилизационный сбор: {yts}')
             print(f'Единая ставка: {duty}')
-            print(f'Итого: {res_rus}')
-
-            return round(toll)
+            print(f'Итого: {result}') 
         
         elif car_type in (CarType.QUAD_BIKE, CarType.SNOWMOBILE): 
             duty_percent = 0.05 
             nds_percent = 0.2 
-            recycling_collection = 120750 
+            yts = 120750 
 
             duty = price_rus * duty_percent 
             nds = price_rus * nds_percent 
 
-            result = duty + nds + recycling_collection + tof
+            result = duty + nds + yts + tof
 
-            return result
+        # result += 69000
+        return {
+            'tof': tof, 
+            'yts': yts, 
+            'duty': duty, 
+            'commission': 69000,
+            'result': result, 
+            'nds': nds, 
+            'excise': excise
+        }
 
         
     except Exception as e:
@@ -325,6 +367,5 @@ async def add_client_calculation(
 
 
 def format_float(number: float | str) -> str: 
-    result = f"{number:_}".replace("_", " ") 
-    print(result)
+    result = f"{round(number, 2):_}".replace("_", " ")
     return result

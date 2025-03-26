@@ -14,6 +14,10 @@ buttons_start = [
     [types.InlineKeyboardButton(text='Оставить заявку', callback_data='feedback')],
 ]
 
+feedback_button = [
+   [types.InlineKeyboardButton(text='Оставить заявку', callback_data='feedback')],
+]
+
 
 client_type_buttons = [
     [types.InlineKeyboardButton(text=f'{client_type.value.capitalize()}', callback_data=f'client_type_{client_type.value}')] 
@@ -31,17 +35,12 @@ currency_buttons = [
     [types.InlineKeyboardButton(text='Вона', callback_data='currency_KRW')],
     [types.InlineKeyboardButton(text='Доллар', callback_data='currency_USD')],
     [types.InlineKeyboardButton(text='Евро', callback_data='currency_EUR')],
-]
-
-car_type_buttons = [
-    [types.InlineKeyboardButton(text='Легковой', callback_data='car_type_легковой')],
-    [types.InlineKeyboardButton(text='Снегоход', callback_data='car_type_снегоход')],
-    [types.InlineKeyboardButton(text='Квадроцикл', callback_data='car_type_квадроцикл')],
+    [types.InlineKeyboardButton(text='Рубль', callback_data='currency_RUB')],
 ]
 
 car_type_buttons = [
     [types.InlineKeyboardButton(text=f'{car_type.value.capitalize()}', callback_data=f'car_type_{car_type.value}')]
-    for car_type in CarType
+    for car_type in CarType if not car_type == CarType.CARGO
 ]
 
 age_buttons = [

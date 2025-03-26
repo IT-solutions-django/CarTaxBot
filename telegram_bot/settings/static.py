@@ -38,6 +38,7 @@ class Currency(Enum):
     CNY: str = 'CNY'
     EUR: str = 'EUR' 
     USD: str = 'USD' 
+    RUB: str = 'RUB'
 
 
 class EngineType(Enum): 
@@ -68,3 +69,4 @@ class CarType(Enum):
     PASSENGER = 'легковой' 
     SNOWMOBILE = 'снегоход' 
     QUAD_BIKE = 'квадроцикл'
+    CARGO = 'грузовое'

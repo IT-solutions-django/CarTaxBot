@@ -8,6 +8,7 @@ class Currency(models.Model):
         ('JPY', 'JPY'),
         ('CNY', 'CNY'),
         ('KRW', 'KRW'),
+        ('RUB', 'RUB')
     ]
 
     name = models.CharField('Название', max_length=50)
