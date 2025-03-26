@@ -219,14 +219,14 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
     keyboard = types.InlineKeyboardMarkup(inline_keyboard=keyboards.feedback_button)
     await callback.message.answer(message_text, reply_markup=keyboard)
 
-    # await add_client_calculation(
-    #     telegram_id=callback.from_user.id, 
-    #     price=data['cost'], 
-    #     age=data['age'], 
-    #     engine_volume=data['engine_volume'], 
-    #     currency=data['currency'], 
-    #     engine_type=data['engine_type'], 
-    # )
+    await add_client_calculation(
+        telegram_id=callback.from_user.id, 
+        price=data['cost'], 
+        age=data['age'], 
+        engine_volume=data['engine_volume'], 
+        currency=data['currency'], 
+        engine_type=data['engine_type'], 
+    )
 
     await state.clear()
     await callback.answer()

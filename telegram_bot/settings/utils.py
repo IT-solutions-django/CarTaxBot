@@ -213,7 +213,8 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
 
             result = duty + nds + yts + tof
 
-        # result += 69000
+        result += 69000
+        
         return {
             'tof': tof, 
             'yts': yts, 
