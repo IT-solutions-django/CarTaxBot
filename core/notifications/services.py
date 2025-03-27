@@ -8,10 +8,13 @@ load_dotenv()
 
 
 TELEGRAM_BOT_API_KEY = os.getenv('API_TOKEN')
+print(TELEGRAM_BOT_API_KEY)
 
 
 def send_telegram_message_for_all(message: str) -> None: 
     telegram_ids = Reciever.objects.values_list('telegram_id', flat=True)
+
+    print(f'Рассылка для следующих Telegram ID: {telegram_ids}')
 
     for telegram_id in telegram_ids:
         requests.post(
