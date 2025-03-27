@@ -22,8 +22,8 @@ services:
       - redis
     volumes:
       - './db:/db'
-      - ./media:/media
-      - ./static:/var/www/static
+      - ./core/media:/media
+      - ./core/static:/var/www/static
     ports:
       - "8000:8000"
     networks:
