@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 
     'users',
     'currencies',
+    'notifications',
 ]
 
 MIDDLEWARE = [

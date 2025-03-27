@@ -10,6 +10,7 @@ from .models import (
     FeedbackRequest, 
     ClientCalculation,
 )
+from notifications.services import send_telegram_message_for_all
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -69,6 +70,12 @@ class SetContactDataView(View):
                 client=client,
                 name=name,
                 phone=phone
+            )
+
+            send_telegram_message_for_all(
+                'Новая заявка из Telegram-бота:\n'
+                f'Имя: {name}\n'
+                f'Телефон: {phone}\n'
             )
             
             return JsonResponse({'message': 'Контактные данные клиента успешно добавлены', 'client_id': client.id}, status=201)
