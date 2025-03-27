@@ -59,11 +59,9 @@ class SetContactDataView(View):
             if not phone:
                 return JsonResponse({'error': 'Укажите phone'}, status=400)
             
-            status = ClientStatus.get_left_contacts_status()
             client = Client.objects.get(telegram_id=telegram_id) 
             client.name = name
             client.phone = phone 
-            client.status = status 
             client.save()
 
             feedback_request = FeedbackRequest.objects.create(
