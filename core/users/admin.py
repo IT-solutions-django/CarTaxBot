@@ -9,7 +9,7 @@ from .models import (
 
 @admin.register(Client) 
 class ClientAdmin(admin.ModelAdmin): 
-    list_display = ['telegram_id', 'name', 'phone']
+    list_display = ['telegram_id', 'name', 'phone', 'status']
 
 
 @admin.register(ClientStatus) 

@@ -226,6 +226,8 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
         engine_volume=data['engine_volume'], 
         currency=data['currency'], 
         engine_type=data['engine_type'], 
+        car_type=data['car_type'], 
+        power_kw=data.get('power')
     )
 
     await state.clear()

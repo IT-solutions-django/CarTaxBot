@@ -16,7 +16,7 @@ class ClientStatus(models.Model):
         return status
     
     def get_calc_status(): 
-        status, _ = ClientStatus.objects.filter(name='calc')
+        status, _ = ClientStatus.objects.get_or_create(name='calc')
         return status
 
 
@@ -31,7 +31,7 @@ class Client(models.Model):
         verbose_name_plural = 'Клиенты'
 
     def __str__(self):
-        return f'Клиент {self.telegram_id}'
+        return f"{f'{self.name} (+{self.phone})' if self.name else f'Telegram ID {self.telegram_id}'}"
     
 
 class FeedbackRequest(models.Model): 
@@ -45,7 +45,7 @@ class FeedbackRequest(models.Model):
         verbose_name_plural = 'заявки'
 
     def __str__(self):
-        return f'Клиент {self.client} | {self.name} | {self.phone}'
+        return f'Заявка от {self.client}'
 
 
 class ClientCalculation(models.Model): 
@@ -56,7 +56,12 @@ class ClientCalculation(models.Model):
     volume = models.FloatField('Объём двигателя')  
     currency = models.CharField('Валюта', max_length=3)  
     engine_type = models.CharField('Тип двигателя', max_length=50)  
+    car_type = models.CharField('Тип транспортного средства', max_length=50) 
+    power_kw = models.CharField('Мощность (кВт, за 30 мин)', max_length=10, null=True, blank=True)
 
     class Meta: 
         verbose_name = 'расчёт'
         verbose_name_plural = 'расчёты'
+
+    def __str__(self):
+        return f'Расчёт пошлины {self.client.telegram_id} ({self.created_at.strftime("%d.%m.%Y")})'

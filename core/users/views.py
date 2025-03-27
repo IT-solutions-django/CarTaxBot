@@ -97,8 +97,8 @@ class AddClientCalculationView(View):
             volume = data.get('engine_volume')
             currency = data.get('currency')
             engine_type = data.get('engine_type')
-
-            print(telegram_id, price, age, volume, currency, engine_type)
+            car_type = data.get('car_type') 
+            power_kw = data.get('power_kw')
 
             if not telegram_id:
                 return JsonResponse({'error': 'Укажите telegram_id'}, status=400)
@@ -112,10 +112,14 @@ class AddClientCalculationView(View):
                 return JsonResponse({'error': 'Укажите currency'}, status=400)
             if not engine_type:
                 return JsonResponse({'error': 'Укажите engine_type'}, status=400)
+            if not car_type:
+                return JsonResponse({'error': 'Укажите car_type'}, status=400)
 
             client = Client.objects.filter(telegram_id=telegram_id).first()
             if not client:
                 return JsonResponse({'error': 'Клиент с таким telegram_id не найден'}, status=404)
+            client.status = ClientStatus.get_calc_status()
+            client.save()
 
             calculation = ClientCalculation.objects.create(
                 client=client,
@@ -123,7 +127,9 @@ class AddClientCalculationView(View):
                 age=age,
                 volume=volume,
                 currency=currency,
-                engine_type=engine_type
+                engine_type=engine_type, 
+                car_type=car_type, 
+                power_kw=power_kw
             )
 
             return JsonResponse({'message': 'Расчёт успешно добавлен', 'calculation_id': calculation.id}, status=201)
