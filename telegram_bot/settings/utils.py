@@ -335,7 +335,14 @@ async def set_contact_data(telegram_id: int, name: str = None, phone: str = None
 
 
 async def add_client_calculation(
-    telegram_id: int, price: float, age: str, engine_volume: float, currency: str, engine_type: str
+    telegram_id: int, 
+    price: float, 
+    age: str, 
+    engine_volume: float, 
+    currency: str, 
+    engine_type: str, 
+    car_type: str, 
+    power_kw: float = None
 ) -> None:
     url = f'http://{back_domain}:8000/{BackendURL.ADD_CLIENT_CALCULATION.value}'  
     headers = {
@@ -348,7 +355,11 @@ async def add_client_calculation(
         'engine_volume': engine_volume,
         'currency': currency,
         'engine_type': engine_type,
+        'car_type': car_type, 
+        'power_kw': power_kw
     }
+
+    print(data)
 
     print('add_client_calculation')
 
