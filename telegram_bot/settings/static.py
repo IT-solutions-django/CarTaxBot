@@ -29,7 +29,7 @@ class BackendURL(Enum):
 
     GET_EXCHANGE_RATES: str = 'http://193.164.149.51/currencies/get-exchange-rates-from-cbr/'
 
-    DOMAIN = DEV_DOMAIN
+    DOMAIN = PROD_DOMAIN
 
 
 class Currency(Enum): 
