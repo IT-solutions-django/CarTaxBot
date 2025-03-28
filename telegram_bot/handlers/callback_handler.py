@@ -195,6 +195,13 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
         duty_data.get('result'), 
         duty_data.get('exchange_rates'),
     )
+    result_text = '' 
+    result_text += (
+        f"Результаты расчёта:\n"
+        f"Таможенная пошлина: {format_float(duty)} ₽\n"
+        f"Утилизационный сбор: {format_float(yts)} ₽\n"
+        f"Таможенные сборы: {format_float(tof)} ₽\n"
+    )
     message_text += (
         f"\n*Результаты расчёта*:\n"
         f"Таможенная пошлина: {format_float(duty)} ₽\n"
@@ -203,13 +210,18 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
     )
     if nds: 
         message_text += f"НДС: {format_float(nds)} ₽\n"
+        result_text += f"НДС: {format_float(nds)} ₽\n"
     if excise: 
         message_text += f"Акциз: {format_float(excise)} ₽\n"
+        result_text += f"Акциз: {format_float(excise)} ₽\n"
     message_text += f"Комиссия компании: {format_float(commission)} ₽\n\n"
+    result_text += f"Комиссия компании: {format_float(commission)} ₽\n\n"
     if data['currency'] != Currency.RUB.value: 
         currency = data['currency']
         updated_at = datetime.strptime(exchange_rates[currency]['updated_at'], '%Y-%m-%dT%H:%M:%S.%fZ')
         message_text += f"Курс на {updated_at.strftime('%d.%m.%Y')}: 1 {currency} = {exchange_rates[currency]['exchange_rate']} ₽\n\n"
+        result_text += f"Курс на {updated_at.strftime('%d.%m.%Y')}: 1 {currency} = {exchange_rates[currency]['exchange_rate']} ₽\n\n"
+    result_text += f"Итоговая сумма: {format_float(result)} ₽"
     message_text += (
         f"*Итоговая сумма: {format_float(result)} ₽*\n\n"
         "Данный расчёт является приблизительным, свяжитесь с нами для уточнения деталей\n\n"
@@ -221,16 +233,16 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer(message_text, reply_markup=keyboard)
     await callback.answer()
 
-    # await add_client_calculation(
-    #     telegram_id=callback.from_user.id, 
-    #     price=data['cost'], 
-    #     age=data['age'], 
-    #     engine_volume=data['engine_volume'], 
-    #     currency=data['currency'], 
-    #     engine_type=data['engine_type'], 
-    #     car_type=data['car_type'], 
-    #     power_kw=data.get('power')
-    # )
+    await add_client_calculation(
+        telegram_id=callback.from_user.id, 
+        age=data['age'], 
+        engine_volume=data['engine_volume'], 
+        currency=data['currency'], 
+        engine_type=data['engine_type'], 
+        car_type=data['car_type'], 
+        power_kw=data.get('power'), 
+        result=result_text
+    )
 
     await state.clear()
 

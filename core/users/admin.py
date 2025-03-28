@@ -4,6 +4,7 @@ from .models import (
     ClientStatus, 
     ClientCalculation, 
     FeedbackRequest,
+    CalculationStatus,
 )
 
 
@@ -25,4 +26,9 @@ class FeedbackRequestAdmin(admin.ModelAdmin):
 
 @admin.register(ClientCalculation) 
 class ClientCalculationAdmin(admin.ModelAdmin): 
-    list_display = ['client', 'age', 'volume', 'currency', 'engine_type', 'created_at', 'price']
+    list_display = ['client', 'age', 'volume', 'currency', 'engine_type', 'created_at', 'status']
+
+
+@admin.register(CalculationStatus) 
+class CalculationStatusAdmin(admin.ModelAdmin): 
+    list_display = ['name']

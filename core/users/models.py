@@ -22,6 +22,7 @@ class ClientStatus(models.Model):
 
 class Client(models.Model): 
     telegram_id = models.CharField('Telegram ID', max_length=15) 
+    telegram_username = models.CharField('Имя пользователя в Telegram', max_length=100, null=True, blank=True)
     name = models.CharField('Имя', null=True, blank=True, max_length=50) 
     phone = models.CharField('Телефон', null=True, blank=True, max_length=50)
     status = models.ForeignKey(verbose_name='Статус', to=ClientStatus, on_delete=models.CASCADE, related_name='clients')
@@ -48,16 +49,40 @@ class FeedbackRequest(models.Model):
         return f'Заявка от {self.client}'
 
 
+class CalculationStatus(models.Model): 
+    name = models.CharField('Название', max_length=50) 
+
+    class Meta: 
+        verbose_name = 'статус расчёта'
+        verbose_name_plural = 'статусы расчётов' 
+
+    def __str__(self):
+        return f'{self.name}'
+    
+    def get_open_status(): 
+        status, _ = CalculationStatus.objects.get_or_create(name='open')
+        return status
+    
+    def get_progress_status(): 
+        status, _ = CalculationStatus.objects.get_or_create(name='progress')
+        return status
+    
+    def get_done_status(): 
+        status, _ = CalculationStatus.objects.get_or_create(name='done')
+        return status
+
+
 class ClientCalculation(models.Model): 
     client = models.ForeignKey(verbose_name='Клиент', to=Client, on_delete=models.CASCADE)
     created_at = models.DateTimeField('Дата и время создания', auto_now_add=True, max_length=50) 
-    price = models.DecimalField('Стоимость', max_digits=10, decimal_places=2)  
     age = models.CharField('Возраст', max_length=20)  
     volume = models.FloatField('Объём двигателя')  
     currency = models.CharField('Валюта', max_length=3)  
     engine_type = models.CharField('Тип двигателя', max_length=50)  
     car_type = models.CharField('Тип транспортного средства', max_length=50) 
     power_kw = models.CharField('Мощность (кВт, за 30 мин)', max_length=10, null=True, blank=True)
+    status = models.ForeignKey(verbose_name='Статус', to=CalculationStatus, on_delete=models.CASCADE, null=True, blank=True)
+    result = models.TextField('Результат')
 
     class Meta: 
         verbose_name = 'расчёт'
@@ -65,3 +90,4 @@ class ClientCalculation(models.Model):
 
     def __str__(self):
         return f'Расчёт пошлины {self.client.telegram_id} ({self.created_at.strftime("%d.%m.%Y")})'
+    

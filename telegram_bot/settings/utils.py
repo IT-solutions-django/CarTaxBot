@@ -417,8 +417,7 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
 
             result = duty + nds + yts + tof
 
-        # result += 69000
-        
+        result += 69000
         return {
             'tof': tof, 
             'yts': yts, 
@@ -490,13 +489,14 @@ def get_commissions(currency: Currency) -> tuple[float, float, float, float, flo
     return delivery, our_commission, broker, commission_sanctions, delivery_sanctions, insurance 
 
 
-async def add_new_client(telegram_id: int, name: str = None, phone: str = None) -> None:
+async def add_new_client(telegram_id: int, telegram_username: str = None, name: str = None, phone: str = None) -> None:
     url = f'http://{back_domain}:8000/users/add-client/'  
     headers = {
         'Content-Type': 'application/json',
     }
     data = {
         'telegram_id': telegram_id,
+        'telegram_username': telegram_username,
         'name': name,
         'phone': phone,
     }
@@ -540,12 +540,12 @@ async def set_contact_data(telegram_id: int, name: str = None, phone: str = None
 
 async def add_client_calculation(
     telegram_id: int, 
-    price: float, 
     age: str, 
     engine_volume: float, 
     currency: str, 
     engine_type: str, 
     car_type: str, 
+    result: str,
     power_kw: float = None
 ) -> None:
     url = f'http://{back_domain}:8000/{BackendURL.ADD_CLIENT_CALCULATION.value}'  
@@ -554,13 +554,13 @@ async def add_client_calculation(
     }
     data = {
         'telegram_id': telegram_id,
-        'price': price,
         'age': age,
         'engine_volume': engine_volume,
         'currency': currency,
         'engine_type': engine_type,
         'car_type': car_type, 
-        'power_kw': power_kw
+        'power_kw': power_kw, 
+        'result': result,
     }
 
     print(data)
