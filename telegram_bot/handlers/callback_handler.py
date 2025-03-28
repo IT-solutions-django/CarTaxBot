@@ -52,6 +52,7 @@ async def ask_currency(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
+# Тип автомобиля
 @router.callback_query(CarDutyCalculation.car_type, F.data.startswith('car_type_'))
 async def ask_currency(callback: types.CallbackQuery, state: FSMContext):
     car_type = callback.data.split('_')[-1]
@@ -63,6 +64,7 @@ async def ask_currency(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
+# Валюта
 @router.callback_query(CarDutyCalculation.currency, F.data.startswith('currency_'))
 async def ask_cost(callback: types.CallbackQuery, state: FSMContext):
     currency = callback.data.split('_')[-1]
@@ -72,6 +74,7 @@ async def ask_cost(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
+# Стоимость
 @router.message(CarDutyCalculation.cost, F.text.regexp(r'^\d+$'))
 async def ask_engine_volume(message: types.Message, state: FSMContext):
     await state.update_data(cost=int(message.text))
@@ -79,6 +82,7 @@ async def ask_engine_volume(message: types.Message, state: FSMContext):
     await message.answer("Введите объём двигателя в см³ (например, 1500):")
 
 
+# Объём двигателя
 @router.message(CarDutyCalculation.engine_volume, F.text.regexp(r'^\d+$'))
 async def ask_engine_type(message: types.Message, state: FSMContext):
     await state.update_data(engine_volume=int(message.text))
@@ -88,28 +92,51 @@ async def ask_engine_type(message: types.Message, state: FSMContext):
     await message.answer("Выберите тип двигателя:", reply_markup=keyboard)
 
 
+# Тип двигателя
 @router.callback_query(CarDutyCalculation.engine_type, F.data.startswith('engine_type_'))
 async def ask_next_step(callback: types.CallbackQuery, state: FSMContext):
     engine_type = callback.data.split('_')[-1]
     await state.update_data(engine_type=engine_type)
-    
-    if engine_type in (EngineType.HYBRID_CONSISTENT.value, EngineType.ELECTRO.value):
-        await state.set_state(CarDutyCalculation.power)
-        await callback.message.answer("Введите 30-минутную мощность двигателя в кВт (например, 60):")
-    else:
-        data = await state.get_data() 
-        car_type = data.get('car_type')
-        # Массу спрашивает только для грузовиков
-        if car_type == CarType.CARGO.value:
-            await state.set_state(CarDutyCalculation.weight)
-            await callback.message.answer("Введите массу автомобиля в тоннах (например, 1.5):")
-        else: 
-            await state.set_state(CarDutyCalculation.client_type)
-            client_type_buttons = keyboards.client_type_buttons
-            keyboard = types.InlineKeyboardMarkup(inline_keyboard=client_type_buttons)
-            await callback.message.answer("Кто ввозит автомобиль:", reply_markup=keyboard)
-    
+
+    # Сначала спрашиваем, кто ввозит авто
+    await state.set_state(CarDutyCalculation.client_type)
+    client_type_buttons = keyboards.client_type_buttons
+    keyboard = types.InlineKeyboardMarkup(inline_keyboard=client_type_buttons)
+    await callback.message.answer("Кто ввозит автомобиль:", reply_markup=keyboard)
     await callback.answer()
+
+
+# Кто ввозит
+@router.callback_query(CarDutyCalculation.client_type, F.data.startswith('client_type_'))
+async def ask_age(callback: types.CallbackQuery, state: FSMContext):
+    print('klfjsenr')
+    client_type = callback.data.split('_')[-1]
+    await state.update_data(client_type=client_type)
+
+    if client_type == ClientType.PHYSICAL.value: 
+        data = await state.get_data() 
+        if data['engine_type'] in (EngineType.ELECTRO.value, EngineType.HYBRID_CONSISTENT.value):
+            await state.set_state(CarDutyCalculation.power)
+            await callback.message.answer('Введите 30-минутную мощность автомобиля в кВт:')
+            await callback.answer()
+        else:
+            await state.set_state(CarDutyCalculation.age)
+            age_buttons = keyboards.age_buttons
+            keyboard = types.InlineKeyboardMarkup(inline_keyboard=age_buttons)
+            await callback.message.answer("Введите возраст автомобиля:", reply_markup=keyboard)
+            await callback.answer()
+    elif client_type == ClientType.JURIDICAL.value: 
+        await state.set_state(CarDutyCalculation.power)
+        text = ''
+        data = await state.get_data() 
+        if data['engine_type'] in (EngineType.ELECTRO.value, EngineType.HYBRID_CONSISTENT.value):
+            text = ("Введите 30-минутную мощность автомобиля в кВт:")
+        else: 
+            text = ("Введите мощность автомобиля в л. с.:")
+
+        await callback.message.answer(text)
+        await callback.answer()
+
 
 # Этот шаг (Мощность) только для электромобилей и последовательных гибридов
 @router.message(CarDutyCalculation.power, F.text.regexp(r'^\d+$'))
@@ -117,57 +144,31 @@ async def ask_weight(message: types.Message, state: FSMContext):
     await state.update_data(power=int(message.text))
     data = await state.get_data() 
     car_type = data.get('car_type')
-    # Массу спрашиваем только для грузовиков
-    if car_type == CarType.CARGO.value:
-        print('Это грузовик')
-        await state.set_state(CarDutyCalculation.weight)
-        await message.answer("Введите массу автомобиля в тоннах (например, 1.5):")
-    else: 
-        await state.set_state(CarDutyCalculation.client_type)
-        client_type_buttons = keyboards.client_type_buttons
-        keyboard = types.InlineKeyboardMarkup(inline_keyboard=client_type_buttons)
-        await message.answer("Кто ввозит автомобиль:", reply_markup=keyboard)
 
-@router.message(CarDutyCalculation.weight, F.text.regexp(r'^\d+(\.\d+)?$'))
-async def ask_client_type(message: types.Message, state: FSMContext):
-    weight = float(message.text)
-    await state.update_data(weight=weight)
-    
-    if weight > 5:
-        await state.set_state(CarDutyCalculation.client_type)
-        client_type_buttons = keyboards.client_type_buttons_only_physical
-        keyboard = types.InlineKeyboardMarkup(inline_keyboard=client_type_buttons)
-        await message.answer("Кто ввозит автомобиль:", reply_markup=keyboard)
-    else:
-        await state.set_state(CarDutyCalculation.client_type)
-        client_type_buttons = keyboards.client_type_buttons
-        keyboard = types.InlineKeyboardMarkup(inline_keyboard=client_type_buttons)
-        await message.answer("Кто ввозит автомобиль:", reply_markup=keyboard)
-
-
-@router.callback_query(CarDutyCalculation.client_type, F.data.startswith('client_type_'))
-async def ask_age(callback: types.CallbackQuery, state: FSMContext):
-    client_type = callback.data.split('_')[-1]
-    await state.update_data(client_type=client_type)
     await state.set_state(CarDutyCalculation.age)
     age_buttons = keyboards.age_buttons
     keyboard = types.InlineKeyboardMarkup(inline_keyboard=age_buttons)
-    await callback.message.answer("Выберите возраст автомобиля:", reply_markup=keyboard)
-    await callback.answer()
+    await message.answer("Выберите возраст автомобиля:", reply_markup=keyboard)
 
 
+# Возраст
 @router.callback_query(CarDutyCalculation.age, F.data.startswith('age_'))
 async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
     age = callback.data.split('_')[-1]
     await state.update_data(age=age)
     data = await state.get_data()
+    power_kw = data.get('power')
+    if data['engine_type'] not in (EngineType.ELECTRO.value, EngineType.HYBRID_CONSISTENT.value): 
+        if power_kw:
+            power_kw = power_kw * 0.75
     duty_data = await calc_toll(
         price=data['cost'], 
         age=data['age'], 
         volume=data['engine_volume'], 
         currency=data['currency'], 
         car_type=data['car_type'],
-        power_kw=data.get('power'),
+        client_type=data['client_type'],
+        power_kw=power_kw,
         engine_type=data['engine_type'], 
     )
     message_text = (
@@ -194,6 +195,13 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
         duty_data.get('result'), 
         duty_data.get('exchange_rates'),
     )
+    result_text = '' 
+    result_text += (
+        f"Результаты расчёта:\n"
+        f"Таможенная пошлина: {format_float(duty)} ₽\n"
+        f"Утилизационный сбор: {format_float(yts)} ₽\n"
+        f"Таможенные сборы: {format_float(tof)} ₽\n"
+    )
     message_text += (
         f"\n*Результаты расчёта*:\n"
         f"Таможенная пошлина: {format_float(duty)} ₽\n"
@@ -202,13 +210,18 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
     )
     if nds: 
         message_text += f"НДС: {format_float(nds)} ₽\n"
+        result_text += f"НДС: {format_float(nds)} ₽\n"
     if excise: 
         message_text += f"Акциз: {format_float(excise)} ₽\n"
+        result_text += f"Акциз: {format_float(excise)} ₽\n"
     message_text += f"Комиссия компании: {format_float(commission)} ₽\n\n"
+    result_text += f"Комиссия компании: {format_float(commission)} ₽\n\n"
     if data['currency'] != Currency.RUB.value: 
         currency = data['currency']
         updated_at = datetime.strptime(exchange_rates[currency]['updated_at'], '%Y-%m-%dT%H:%M:%S.%fZ')
         message_text += f"Курс на {updated_at.strftime('%d.%m.%Y')}: 1 {currency} = {exchange_rates[currency]['exchange_rate']} ₽\n\n"
+        result_text += f"Курс на {updated_at.strftime('%d.%m.%Y')}: 1 {currency} = {exchange_rates[currency]['exchange_rate']} ₽\n\n"
+    result_text += f"Итоговая сумма: {format_float(result)} ₽"
     message_text += (
         f"*Итоговая сумма: {format_float(result)} ₽*\n\n"
         "Данный расчёт является приблизительным, свяжитесь с нами для уточнения деталей\n\n"
@@ -218,20 +231,20 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
     )
     keyboard = types.InlineKeyboardMarkup(inline_keyboard=keyboards.feedback_button)
     await callback.message.answer(message_text, reply_markup=keyboard)
+    await callback.answer()
 
     await add_client_calculation(
         telegram_id=callback.from_user.id, 
-        price=data['cost'], 
         age=data['age'], 
         engine_volume=data['engine_volume'], 
         currency=data['currency'], 
         engine_type=data['engine_type'], 
         car_type=data['car_type'], 
-        power_kw=data.get('power')
+        power_kw=data.get('power'), 
+        result=result_text
     )
 
     await state.clear()
-    await callback.answer()
 
 
 # Заявка

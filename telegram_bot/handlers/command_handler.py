@@ -24,7 +24,8 @@ async def send_welcome(message: types.Message) -> None:
     await message.answer(Message.START_MESSAGE, reply_markup=keyboard)
 
     await add_new_client(
-        telegram_id=message.from_user.id
+        telegram_id=message.from_user.id, 
+        telegram_username=message.from_user.username
     )
 
 

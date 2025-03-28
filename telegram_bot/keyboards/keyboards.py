@@ -29,6 +29,11 @@ client_type_buttons_only_physical = [
     for client_type in ClientType if client_type.value != 'юридическое лицо'
 ]
 
+client_type_buttons_only_physical = [
+    [types.InlineKeyboardButton(text=f'{client_type.value.capitalize()}', callback_data=f'client_type_{client_type.value}')] 
+    for client_type in ClientType if client_type.value != 'юридическое лицо'
+]
+
 currency_buttons = [
     [types.InlineKeyboardButton(text='Юань', callback_data='currency_CNY')],
     [types.InlineKeyboardButton(text='Иена', callback_data='currency_JPY')],
