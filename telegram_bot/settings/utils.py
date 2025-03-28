@@ -10,6 +10,7 @@ from settings.static import (
     Currency, 
     CarAge, 
     CarType,
+    ClientType,
 )
 from settings.static import BackendURL
 
@@ -33,7 +34,7 @@ async def show_options(obj: Union[types.CallbackQuery, types.Message], data_dict
         await obj.answer(text=f'Выберите {exclude_key}', reply_markup=builder.as_markup())
 
 
-async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: str, power_kw: float = None, engine_type: str = None) -> dict:
+async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: str, client_type: str, power_kw: float = None, engine_type: str = None) -> dict:
     """
     duty - пошлина
     tof - таможенное оформление
@@ -46,6 +47,7 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
         engine_type = EngineType(engine_type)
         age: CarAge = CarAge(age)
         car_type: CarType = CarType(car_type)
+        client_type: ClientType = ClientType(client_type)
 
         exchange_rates = await get_exchange_rates()
 
@@ -53,6 +55,7 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
         volume = int(volume)
         nds = None
         excise = None
+        duty = None
 
         # Перевод цены в рубли
         if currency == Currency.RUB:
@@ -81,122 +84,323 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
 
         if car_type == CarType.PASSENGER or car_type == CarType.CARGO:
             if age == CarAge.LESS_THAN_3:
+                # Утилизационный сбор (физ и юр)
                 if volume > 3500:
-                    yts = 2742200
-                elif (volume >= 3000) and (volume <= 3499):
-                    yts = 2153400
+                    yts = 20000*137.11 
+                elif (volume > 3000) and (volume <= 3499):
+                    yts = 20000*107.67 
+                elif (volume > 2000) and (volume <= 3000):
+                    if client_type == ClientType.PHYSICAL: 
+                        yts = 20000*0.17 
+                    elif client_type == ClientType.JURIDICAL: 
+                        yts = 20000*93.77
+                elif (volume > 1000) and (volume <= 2000):
+                    if client_type == ClientType.PHYSICAL: 
+                        yts = 20000*0.17 
+                    elif client_type == ClientType.JURIDICAL: 
+                        yts = 20000*33.37
                 else:
-                    yts = 3400
+                    if client_type == ClientType.PHYSICAL: 
+                        yts = 20000*0.17 
+                    elif client_type == ClientType.JURIDICAL: 
+                        yts = 20000*9.01
                 europrice = price_rus / exchange_rates['EUR']['exchange_rate']
 
-                if engine_type in (EngineType.ELECTRO, EngineType.HYBRID_CONSISTENT):
-                    duty = europrice * 0.15
-                    yts = 20000*0.17
-                elif europrice < 8500:
-                    duty = europrice * 0.54
-                    if duty / volume < 2.5:
-                        duty = volume * 2.5
-                elif (europrice > 8500) and (europrice <= 16700):
-                    duty = europrice * 0.48 
-                    if duty / volume < 3.5:
-                        duty = volume * 3.5
-                elif (europrice > 16700) and (europrice <= 42300):
-                    duty = europrice * 0.48
-                    if duty / volume < 5.5:
-                        duty = volume * 5.5
-                elif (europrice > 42300) and (europrice <= 84500):
-                    duty = europrice * 0.48
-                    if duty / volume < 7.5:
-                        duty = volume * 7.5
-                elif (europrice > 84500) and (europrice <= 169000):
-                    duty = europrice * 0.48
-                    if duty / volume < 15:
-                        duty = volume * 15
-                else:
-                    duty = europrice * 0.48
-                    if duty / volume < 20:
-                        duty = volume * 20
+                # Пошлина (физ)
+                if client_type == ClientType.PHYSICAL:
+                    if engine_type in (EngineType.ELECTRO, EngineType.HYBRID_CONSISTENT):
+                        duty = europrice * 0.15
+                        yts = 20000*0.17 
+                    elif europrice < 8500:
+                        duty = europrice * 0.54
+                        if duty / volume < 2.5:
+                            duty = volume * 2.5
+                    elif (europrice > 8500) and (europrice <= 16700):
+                        duty = europrice * 0.48 
+                        if duty / volume < 3.5:
+                            duty = volume * 3.5
+                    elif (europrice > 16700) and (europrice <= 42300):
+                        duty = europrice * 0.48
+                        if duty / volume < 5.5:
+                            duty = volume * 5.5
+                    elif (europrice > 42300) and (europrice <= 84500):
+                        duty = europrice * 0.48
+                        if duty / volume < 7.5:
+                            duty = volume * 7.5
+                    elif (europrice > 84500) and (europrice <= 169000):
+                        duty = europrice * 0.48
+                        if duty / volume < 15:
+                            duty = volume * 15
+                    else:
+                        duty = europrice * 0.48
+                        if duty / volume < 20:
+                            duty = volume * 20
+                # Пошлина (юр)
+                elif client_type == ClientType.JURIDICAL: 
+                    if engine_type in (EngineType.ELECTRO, EngineType.HYBRID_CONSISTENT):
+                        duty = europrice * 0.15
+                        yts = 20000*33.37  
+                    elif engine_type in (EngineType.PETROL,): 
+                        if volume <= 1000:
+                            duty = europrice * 0.15
+                        elif (volume >= 1001) and (volume <= 1500):
+                            duty = europrice * 0.15
+                        elif (volume >= 1501) and (volume <= 1800):
+                            duty = europrice * 0.15
+                        elif (volume >= 1801) and (volume <= 2300):
+                            duty = europrice * 0.15
+                        elif (volume >= 2301) and (volume <= 3000):
+                            duty = europrice * 0.15
+                        else:
+                            duty = europrice * 0.125
+                    elif engine_type == EngineType.DIESEL: 
+                        if volume <= 1500:
+                            duty = europrice * 0.15
+                        elif (volume >= 1501) and (volume <= 2500):
+                            duty = europrice * 0.15
+                        else:
+                            duty = europrice * 0.15
             
             elif age == CarAge.FROM_3_TO_5:
+                # Утилизационный сбор (физ и юр)
                 if volume > 3500:
-                    yts = 3604800
+                    yts = 20000*180.24 
                 elif (volume > 3000) and (volume <= 3500):
-                    yts = 3296800
+                    yts = 20000*164.84 
+                elif (volume > 2000) and (volume <= 3000):
+                    if client_type == ClientType.PHYSICAL: 
+                        yts = 20000*0.26 
+                    elif client_type == ClientType.JURIDICAL: 
+                        yts = 20000*141.97
+                elif (volume > 1000) and (volume <= 2000):
+                    if client_type == ClientType.PHYSICAL: 
+                        yts = 20000*0.26 
+                    elif client_type == ClientType.JURIDICAL: 
+                        yts = 20000*58.7
                 else:
-                    yts = 5200
+                    if client_type == ClientType.PHYSICAL: 
+                        yts = 20000*0.26 
+                    elif client_type == ClientType.JURIDICAL: 
+                        yts = 20000*23
                 
-                europrice = price_rus / exchange_rates['EUR']['exchange_rate']
-                if engine_type in (EngineType.ELECTRO, EngineType.HYBRID_CONSISTENT):
-                    duty = europrice * 0.15
-                    yts = 20000*0.26
-                elif volume <= 1000:
-                    duty = volume * 1.5
-                elif (volume >= 1001) and (volume <= 1500):
-                    duty = volume * 1.7
-                elif (volume >= 1501) and (volume <= 1800):
-                    duty = volume * 2.5
-                elif (volume >= 1801) and (volume <= 2300):
-                    duty = volume * 2.7
-                elif (volume >= 2301) and (volume <= 3000):
-                    duty = volume * 3
-                else:
-                    duty = volume * 3.6
+                if client_type == ClientType.PHYSICAL:
+                    europrice = price_rus / exchange_rates['EUR']['exchange_rate']
+                    if engine_type in (EngineType.ELECTRO, EngineType.HYBRID_CONSISTENT):
+                        duty = europrice * 0.15
+                        yts = 20000*0.26 
+                    elif volume <= 1000:
+                        duty = volume * 1.5
+                    elif (volume >= 1001) and (volume <= 1500):
+                        duty = volume * 1.7
+                    elif (volume >= 1501) and (volume <= 1800):
+                        duty = volume * 2.5
+                    elif (volume >= 1801) and (volume <= 2300):
+                        duty = volume * 2.7
+                    elif (volume >= 2301) and (volume <= 3000):
+                        duty = volume * 3
+                    else:
+                        duty = volume * 3.6
+                elif client_type == ClientType.JURIDICAL:
+                    europrice = price_rus / exchange_rates['EUR']['exchange_rate']
+                    if engine_type in (EngineType.ELECTRO, EngineType.HYBRID_CONSISTENT):
+                        duty = europrice * 0.15
+                        yts = 20000*58.7
+                    elif engine_type in (EngineType.PETROL,):
+                        if volume <= 1000:
+                            duty = europrice * 0.20 
+                            if duty / volume < 0.36: 
+                                duty = volume * 0.36
+                        elif (volume >= 1001) and (volume <= 1500):
+                            duty = europrice * 0.20
+                            if duty / volume < 0.4: 
+                                duty = volume * 0.4
+                        elif (volume >= 1501) and (volume <= 1800):
+                            duty = europrice * 0.20
+                            if duty / volume < 0.36: 
+                                duty = volume * 0.36
+                        elif (volume >= 1801) and (volume <= 2300):
+                            duty = europrice * 0.20
+                            if duty / volume < 0.44: 
+                                duty = volume * 0.44
+                        elif (volume >= 2301) and (volume <= 3000):
+                            duty = europrice * 0.20
+                            if duty / volume < 0.44: 
+                                duty = volume * 0.44
+                        else:
+                            duty = europrice * 0.20
+                            if duty / volume < 0.8: 
+                                duty = volume * 0.8
+                    elif engine_type == EngineType.DIESEL:
+                        if volume <= 1500:
+                            duty = europrice * 0.20
+                            if duty / volume < 0.32: 
+                                duty = volume * 0.32
+                        elif (volume >= 1501) and (volume <= 2500):
+                            duty = europrice * 0.20
+                            if duty / volume < 0.32: 
+                                duty = volume * 0.4
+                        else:
+                            duty = europrice * 0.20
+                            if duty / volume < 0.32: 
+                                duty = volume * 0.8
+
             elif age == CarAge.FROM_5_TO_7 or age == CarAge.MORE_THAN_7:
                 if volume > 3500:
-                    yts = 3604800
+                    yts = 20000*180.24 
                 elif (volume > 3000) and (volume <= 3500):
-                    yts = 3296800
+                    yts = 20000*164.84 
+                elif (volume > 2000) and (volume <= 3000):
+                    if client_type == ClientType.PHYSICAL: 
+                        yts = 20000*0.26 
+                    elif client_type == ClientType.JURIDICAL: 
+                        yts = 20000*141.97
+                elif (volume > 1000) and (volume <= 2000):
+                    if client_type == ClientType.PHYSICAL: 
+                        yts = 20000*0.26 
+                    elif client_type == ClientType.JURIDICAL: 
+                        yts = 20000*58.7
                 else:
-                    yts = 5200
+                    if client_type == ClientType.PHYSICAL: 
+                        yts = 20000*0.26 
+                    elif client_type == ClientType.JURIDICAL: 
+                        yts = 20000*23
 
                 europrice = price_rus / exchange_rates['EUR']['exchange_rate']
-                if engine_type in (EngineType.ELECTRO, EngineType.HYBRID_CONSISTENT):
-                    duty = europrice * 0.15
-                    yts = 20000*0.26
-                elif volume <= 1000:
-                    duty = volume * 3
-                elif (volume >= 1001) and (volume <= 1500):
-                    duty = volume * 3.2
-                elif (volume >= 1501) and (volume <= 1800):
-                    duty = volume * 3.5
-                elif (volume >= 1801) and (volume <= 2300):
-                    duty = volume * 4.8
-                elif (volume >= 2301) and (volume <= 3000):
-                    duty = volume * 5
-                else:
-                    duty = volume * 5.7
-
-
-            if engine_type in (EngineType.ELECTRO, EngineType.HYBRID_CONSISTENT):
-                duty = price_rus * 0.15
-                nds_percent = 0.2
-
-                if power_kw is not None:
-                    if power_kw <= 67.5:
-                        excise = 0
-                    elif power_kw <= 112.5:
-                        excise = (power_kw / 0.75) * 61
-                    elif power_kw <= 150:
-                        excise = (power_kw / 0.75) * 583
-                    elif power_kw <= 225:
-                        excise = (power_kw / 0.75) * 955
-                    elif power_kw <= 300:
-                        excise = (power_kw / 0.75) * 1628
-                    elif power_kw <= 375:
-                        excise = (power_kw / 0.75) * 1685
+                if client_type == ClientType.PHYSICAL:
+                    if engine_type in (EngineType.ELECTRO, EngineType.HYBRID_CONSISTENT):
+                        duty = europrice * 0.15
+                        yts = 20000*0.26 
+                    elif volume <= 1000:
+                        duty = volume * 3
+                    elif (volume >= 1001) and (volume <= 1500):
+                        duty = volume * 3.2
+                    elif (volume >= 1501) and (volume <= 1800):
+                        duty = volume * 3.5
+                    elif (volume >= 1801) and (volume <= 2300):
+                        duty = volume * 4.8
+                    elif (volume >= 2301) and (volume <= 3000):
+                        duty = volume * 5
                     else:
-                        excise = (power_kw / 0.75) * 1740 
-                else: 
-                    raise Exception('Для электромобиля не указана мощность')
+                        duty = volume * 5.7
+                elif client_type == ClientType.JURIDICAL: 
+                    if engine_type in (EngineType.ELECTRO, EngineType.HYBRID_CONSISTENT):
+                        duty = europrice * 0.15
+                        yts = 20000*58.7
+                    elif engine_type in (EngineType.PETROL,): 
+                        if age == CarAge.FROM_5_TO_7:
+                            if volume <= 1000:
+                                duty = europrice * 0.20 
+                                if duty / volume < 0.36: 
+                                    duty = volume * 0.36
+                            elif (volume >= 1001) and (volume <= 1500):
+                                duty = europrice * 0.20
+                                if duty / volume < 0.4: 
+                                    duty = volume * 0.4
+                            elif (volume >= 1501) and (volume <= 1800):
+                                duty = europrice * 0.20
+                                if duty / volume < 0.36: 
+                                    duty = volume * 0.36
+                            elif (volume >= 1801) and (volume <= 2300):
+                                duty = europrice * 0.20
+                                if duty / volume < 0.44: 
+                                    duty = volume * 0.44
+                            elif (volume >= 2301) and (volume <= 3000):
+                                duty = europrice * 0.20
+                                if duty / volume < 0.44: 
+                                    duty = volume * 0.44
+                            else:
+                                duty = europrice * 0.20
+                                if duty / volume < 0.8: 
+                                    duty = volume * 0.8
+                        elif age == CarAge.MORE_THAN_7: 
+                            if volume <= 1000:
+                                duty = volume * 1.4
+                            elif (volume >= 1001) and (volume <= 1500):
+                                duty = volume * 1.5
+                            elif (volume >= 1501) and (volume <= 1800):
+                                duty = volume * 1.6
+                            elif (volume >= 1801) and (volume <= 2300):
+                                duty = volume * 2.2
+                            elif (volume >= 2301) and (volume <= 3000):
+                                duty = volume * 2.2
+                            else:
+                                duty = volume * 3.2
+                    elif engine_type == EngineType.DIESEL: 
+                        if age == CarAge.FROM_5_TO_7: 
+                            if volume <= 1500:
+                                duty = europrice * 0.20
+                                if duty / volume < 0.32: 
+                                    duty = volume * 0.32
+                            elif (volume >= 1501) and (volume <= 2500):
+                                duty = europrice * 0.20
+                                if duty / volume < 0.32: 
+                                    duty = volume * 0.4
+                            else:
+                                duty = europrice * 0.20
+                                if duty / volume < 0.32: 
+                                    duty = volume * 0.8
+                        elif age == CarAge.MORE_THAN_7: 
+                            if volume <= 1500:
+                                duty = volume * 1.5
+                            elif (volume >= 1501) and (volume <= 2500):
+                                duty = volume * 2.2
+                            else:
+                                duty = volume * 3.2
 
+            # Акциз (готово)
+            if client_type == ClientType.JURIDICAL: 
+                if power_kw <= 67.5:
+                    excise = 0
+                elif power_kw <= 112.5:
+                    excise = (power_kw / 0.75) * 61
+                elif power_kw <= 150:
+                    excise = (power_kw / 0.75) * 583
+                elif power_kw <= 225:
+                    excise = (power_kw / 0.75) * 955
+                elif power_kw <= 300:
+                    excise = (power_kw / 0.75) * 1628
+                elif power_kw <= 375:
+                    excise = (power_kw / 0.75) * 1685
+                else:
+                    excise = (power_kw / 0.75) * 1740 
+
+            if client_type == ClientType.PHYSICAL:
+                if engine_type in (EngineType.ELECTRO, EngineType.HYBRID_CONSISTENT):
+                    duty = price_rus * 0.15
+                    nds_percent = 0.2
+
+                    if power_kw is not None:
+                        if power_kw <= 67.5:
+                            excise = 0
+                        elif power_kw <= 112.5:
+                            excise = (power_kw / 0.75) * 61
+                        elif power_kw <= 150:
+                            excise = (power_kw / 0.75) * 583
+                        elif power_kw <= 225:
+                            excise = (power_kw / 0.75) * 955
+                        elif power_kw <= 300:
+                            excise = (power_kw / 0.75) * 1628
+                        elif power_kw <= 375:
+                            excise = (power_kw / 0.75) * 1685
+                        else:
+                            excise = (power_kw / 0.75) * 1740 
+                    else: 
+                        raise Exception('Для электромобиля не указана мощность')
+
+                    nds = (price_rus + duty + excise) * nds_percent
+                    toll = duty + tof + yts + nds + excise
+                else:
+                    duty = duty * exchange_rates['EUR']['exchange_rate']
+                    toll = duty + tof + yts
+
+                result = toll
+            elif client_type == ClientType.JURIDICAL: 
+                nds_percent = 0.2
+                duty = duty * exchange_rates['EUR']['exchange_rate']
                 
                 nds = (price_rus + duty + excise) * nds_percent
                 toll = duty + tof + yts + nds + excise
-            else:
-                duty = duty * exchange_rates['EUR']['exchange_rate']
-                toll = duty + tof + yts
-
-            result = toll
+                result = toll
 
             print(f'Таможенное оформление: {tof}')
             print(f'Утилизационный сбор: {yts}')
@@ -213,7 +417,7 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
 
             result = duty + nds + yts + tof
 
-        result += 69000
+        # result += 69000
         
         return {
             'tof': tof, 
