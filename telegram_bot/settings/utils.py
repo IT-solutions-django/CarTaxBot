@@ -1,10 +1,5 @@
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram import types
-from typing import Optional, Dict, List, Union
-from datetime import datetime
 from settings.static import Currency, EngineType
 import aiohttp
-from bs4 import BeautifulSoup
 import json
 from settings.static import (
     Currency, 
@@ -17,21 +12,6 @@ from settings.static import BackendURL
 
 back_domain = BackendURL.DOMAIN.value
 
-
-async def show_options(obj: Union[types.CallbackQuery, types.Message], data_dict: Dict[str, dict], exclude_key: str,
-                       action: Optional[str] = None) -> None:
-    builder = InlineKeyboardBuilder()
-    for key in data_dict.keys():
-        if action is not None:
-            builder.row(types.InlineKeyboardButton(text=key, callback_data=f'{action}_{key}'))
-        else:
-            builder.row(types.InlineKeyboardButton(text=key, callback_data=key))
-
-    if isinstance(obj, types.CallbackQuery):
-        await obj.message.answer(text=f'Выберите {exclude_key}', reply_markup=builder.as_markup())
-        await obj.answer()
-    elif isinstance(obj, types.Message):
-        await obj.answer(text=f'Выберите {exclude_key}', reply_markup=builder.as_markup())
 
 
 async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: str, client_type: str, power_kw: float = None, engine_type: str = None) -> dict:
@@ -49,7 +29,8 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
         car_type: CarType = CarType(car_type)
         client_type: ClientType = ClientType(client_type)
 
-        exchange_rates = await get_exchange_rates()
+        from bot import get_rates
+        exchange_rates = await get_rates()
 
         price = float(price)
         volume = int(volume)
@@ -432,27 +413,6 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
         
     except Exception as e:
         print(f'Ошибка в calc_toll: {str(e)}')
-
-
-async def get_exchange_rates() -> dict:
-    url = "http://193.164.149.51/currencies/get-exchange-rates-from-cbr/"
-    
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            if response.status == 200:
-                data = await response.json()
-                exchange_rates = {
-                    currency: {
-                        'exchange_rate': info['exchange_rate'], 
-                        'updated_at': info['updated_at']
-                    }
-                    for currency, info in data.items()
-                    if currency in ['JPY', 'KRW', 'CNY', 'EUR', 'USD']
-                }
-                print(exchange_rates)
-                return exchange_rates
-            else:
-                raise Exception(f"Не удалось получить курсы валют. Код ответа: {response.status}")
 
 
 def get_commissions(currency: Currency) -> tuple[float, float, float, float, float, float]:
