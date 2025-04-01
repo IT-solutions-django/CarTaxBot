@@ -1,9 +1,5 @@
-import asyncio
 from aiogram import types
 from aiogram import F, Router
-from settings.static import Message
-from settings.utils import show_options
-from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from .state import CarDutyCalculation, ClientContacts
 from settings.utils import (
@@ -12,9 +8,8 @@ from settings.utils import (
     format_float, 
     add_client_calculation,
 )
-from settings.static import EngineType, ClientType, CarType, Currency
+from settings.static import EngineType, ClientType, Currency
 from keyboards import keyboards
-from settings.utils import get_exchange_rates
 from datetime import datetime
 
 router = Router()
@@ -24,7 +19,8 @@ router = Router()
 
 @router.callback_query(F.data == 'currencies')
 async def ask_currency(callback: types.CallbackQuery):
-    exchange_rates: dict[dict] = await get_exchange_rates() 
+    from bot import get_rates
+    exchange_rates: dict = await get_rates()
 
     text = '📈 Актуальные курсы валют:\n\n'
     all_dates = []
@@ -175,10 +171,17 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
         f"Тип: {data['car_type']}\n"
         f"Стоимость: {format_float(data['cost'])} {data['currency']}\n"
         f"Объём двигателя: {data['engine_volume']} см³\n"
+        f"Тип клиента: {data['client_type']}\n"
     )
-
     if 'weight' in data and data['weight']:
         message_text += f"Масса: {data['weight']} тонн\n"
+
+    if data['engine_type'] not in (EngineType.ELECTRO.value, EngineType.HYBRID_CONSISTENT.value): 
+        if data.get('power'):
+            message_text += f"Мощность: {data.get('power')} л. с.\n"
+    else:
+        if power_kw:
+            message_text += f"Мощность: {power_kw} кВт\n"
 
     message_text += (
         f"Возраст: {data['age']}\n"

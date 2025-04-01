@@ -2,14 +2,11 @@ from aiogram.filters import Command
 from aiogram import types
 from aiogram import Router
 from settings.static import Message
-from keyboards.keyboards import buttons_start, contacts_buttons
-from settings.utils import show_options, add_new_client
-from aiogram.fsm.state import State, StatesGroup
+from keyboards.keyboards import buttons_start
+from settings.utils import add_new_client
 from aiogram.fsm.context import FSMContext
-from settings.static import EngineType, ClientType
 from keyboards import keyboards
 from .state import CarDutyCalculation, ClientContacts
-from settings.utils import get_exchange_rates
 from .state import ClientContacts
 from datetime import datetime
 
@@ -45,7 +42,8 @@ async def send_welcome(message: types.Message, state=FSMContext) -> None:
 
 @router.message(Command('currency'))
 async def start_contact_collection(message: types.Message):
-    exchange_rates: dict[dict] = await get_exchange_rates() 
+    from bot import get_rates
+    exchange_rates: dict = await get_rates()
 
     text = '📈 Актуальные курсы валют:\n\n'
     all_dates = []
