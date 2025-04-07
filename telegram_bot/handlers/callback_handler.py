@@ -224,7 +224,6 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
         currency = data['currency']
         updated_at = datetime.strptime(exchange_rates[currency]['updated_at'], '%Y-%m-%dT%H:%M:%S.%fZ')
         message_exchange_rate_text = f'1 {currency} = {exchange_rates[currency]["exchange_rate"]} ₽'
-        # message_text += f"Курс на {updated_at.strftime('%d.%m.%Y')}: 1 {currency} = {exchange_rates[currency]['exchange_rate']} ₽\n\n"
         result_text += f"Курс на {updated_at.strftime('%d.%m.%Y')}: 1 {currency} = {exchange_rates[currency]['exchange_rate']} ₽\n\n"
     result_text += f"Итоговая сумма: {format_float(result)} ₽"
     message_text += (

@@ -121,7 +121,7 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
                     if engine_type in (EngineType.ELECTRO, EngineType.HYBRID_CONSISTENT):
                         duty = europrice * 0.15
                         yts = 20000*33.37  
-                    elif engine_type in (EngineType.PETROL,): 
+                    elif engine_type in (EngineType.PETROL, EngineType.HYBRID_PARALLEL): 
                         if volume <= 1000:
                             duty = europrice * 0.15
                         elif (volume >= 1001) and (volume <= 1500):
@@ -186,7 +186,7 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
                     if engine_type in (EngineType.ELECTRO, EngineType.HYBRID_CONSISTENT):
                         duty = europrice * 0.15
                         yts = 20000*58.7
-                    elif engine_type in (EngineType.PETROL,):
+                    elif engine_type in (EngineType.PETROL, EngineType.HYBRID_PARALLEL):
                         if volume <= 1000:
                             duty = europrice * 0.20 
                             if duty / volume < 0.36: 
@@ -267,7 +267,7 @@ async def calc_toll(price: int, age: str, volume: int, currency: str, car_type: 
                     if engine_type in (EngineType.ELECTRO, EngineType.HYBRID_CONSISTENT):
                         duty = europrice * 0.15
                         yts = 20000*58.7
-                    elif engine_type in (EngineType.PETROL,): 
+                    elif engine_type in (EngineType.PETROL, EngineType.HYBRID_PARALLEL): 
                         if age == CarAge.FROM_5_TO_7:
                             if volume <= 1000:
                                 duty = europrice * 0.20 
