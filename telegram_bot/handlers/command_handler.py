@@ -18,7 +18,7 @@ router = Router()
 async def send_welcome(message: types.Message) -> None:
     keyboard = types.InlineKeyboardMarkup(inline_keyboard=buttons_start)
 
-    await message.answer(Message.START_MESSAGE, reply_markup=keyboard)
+    await message.answer(Message.START_MESSAGE, reply_markup=keyboard, disable_web_page_preview=True)
 
     await add_new_client(
         telegram_id=message.from_user.id, 
