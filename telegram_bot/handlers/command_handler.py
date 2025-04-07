@@ -15,10 +15,10 @@ router = Router()
 
 
 @router.message(Command("start"))
-async def send_welcome(message: types.Message) -> None:
+async def send_contacts(message: types.Message) -> None:
     keyboard = types.InlineKeyboardMarkup(inline_keyboard=buttons_start)
 
-    await message.answer(Message.START_MESSAGE, reply_markup=keyboard)
+    await message.answer(Message.START_MESSAGE, reply_markup=keyboard, disable_web_page_preview=True)
 
     await add_new_client(
         telegram_id=message.from_user.id, 
@@ -27,13 +27,13 @@ async def send_welcome(message: types.Message) -> None:
 
 
 @router.message(Command("feedback"))
-async def send_welcome(message: types.Message, state=FSMContext) -> None:
+async def send_contacts(message: types.Message, state=FSMContext) -> None:
     await state.set_state(ClientContacts.name)
     await message.answer("Введите ваше имя (например, Максим):")
 
 
 @router.message(Command("calc"))
-async def send_welcome(message: types.Message, state=FSMContext) -> None:
+async def send_contacts(message: types.Message, state=FSMContext) -> None:
     await state.set_state(CarDutyCalculation.car_type)
     car_type_buttons = keyboards.car_type_buttons
     keyboard = types.InlineKeyboardMarkup(inline_keyboard=car_type_buttons)
@@ -57,3 +57,9 @@ async def start_contact_collection(message: types.Message):
         text += f"\n✅ Все данные актуальны на {common_date}\nИсточник - Центральный банк РФ"
 
     await message.answer(text)
+
+
+@router.message(Command("contacts"))
+async def send_contacts(message: types.Message) -> None:
+    text = Message.CONTACT_MESSAGE 
+    await message.answer(text, disable_web_page_preview=True)

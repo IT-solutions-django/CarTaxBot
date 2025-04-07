@@ -219,21 +219,27 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
         result_text += f"Акциз: {format_float(excise)} ₽\n"
     message_text += f"Комиссия компании: {format_float(commission)} ₽\n\n"
     result_text += f"Комиссия компании: {format_float(commission)} ₽\n\n"
+    message_exchange_rate_text = ''
     if data['currency'] != Currency.RUB.value: 
         currency = data['currency']
         updated_at = datetime.strptime(exchange_rates[currency]['updated_at'], '%Y-%m-%dT%H:%M:%S.%fZ')
-        message_text += f"Курс на {updated_at.strftime('%d.%m.%Y')}: 1 {currency} = {exchange_rates[currency]['exchange_rate']} ₽\n\n"
+        message_exchange_rate_text = f'1 {currency} = {exchange_rates[currency]["exchange_rate"]} ₽'
         result_text += f"Курс на {updated_at.strftime('%d.%m.%Y')}: 1 {currency} = {exchange_rates[currency]['exchange_rate']} ₽\n\n"
     result_text += f"Итоговая сумма: {format_float(result)} ₽"
     message_text += (
         f"*Итоговая сумма: {format_float(result)} ₽*\n\n"
-        "Данный расчёт является приблизительным, свяжитесь с нами для уточнения деталей\n\n"
-        "*Телефон: +7 (111) 111-11-11*\n"
-        "*Email: example@example.com*\n\n"
-        "Также Вы можете оставить заявку и наш менеджер свяжется с Вами в ближайшее время"
+        f"Расчеты произведены на актуальный курс{f': {message_exchange_rate_text}' if message_exchange_rate_text else '.'}\n\n"
+        "Остались вопросы? Хотите оставить заявку?\n"
+        "Свяжитесь с нами!\n"
+        "Контакты нашей компании:\n"
+        "🤙+7(804)7005188\n"
+        "📲 +79084463450 (WA) \n"
+        "📧 av.terminal@mail.ru\n"
+        "🌐 avterminal.ru\n"
+        "💬 https://t.me/avterminaal\n"
     )
     keyboard = types.InlineKeyboardMarkup(inline_keyboard=keyboards.feedback_button)
-    await callback.message.answer(message_text, reply_markup=keyboard)
+    await callback.message.answer(message_text, reply_markup=keyboard, disable_web_page_preview=True)
     await callback.answer()
 
     await add_client_calculation(
