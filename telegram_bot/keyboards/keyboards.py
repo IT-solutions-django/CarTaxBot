@@ -15,6 +15,7 @@ buttons_start = [
 ]
 
 feedback_button = [
+    [types.InlineKeyboardButton(text='Повторить расчет', callback_data='calc')],
    [types.InlineKeyboardButton(text='Оставить заявку', callback_data='feedback')],
 ]
 
