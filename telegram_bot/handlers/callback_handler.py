@@ -288,16 +288,16 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
     )
     result_text = '' 
     result_text += (
-        f"Результаты расчёта:\n"
+        f"\n*Результаты расчёта*:\n"
+        f"\n*Таможенные платежи:*\n"
         f"Таможенная пошлина: {format_float(duty)} ₽\n"
         f"Утилизационный сбор: {format_float(yts)} ₽\n"
-        f"Таможенные сборы: {format_float(tof)} ₽\n"
     )
     message_text += (
         f"\n*Результаты расчёта*:\n"
+        f"\n*Таможенные платежи:*\n"
         f"Таможенная пошлина: {format_float(duty)} ₽\n"
         f"Утилизационный сбор: {format_float(yts)} ₽\n"
-        f"Таможенные сборы: {format_float(tof)} ₽\n"
     )
     if nds: 
         message_text += f"НДС: {format_float(nds)} ₽\n"
@@ -305,6 +305,16 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
     if excise: 
         message_text += f"Акциз: {format_float(excise)} ₽\n"
         result_text += f"Акциз: {format_float(excise)} ₽\n"
+
+    message_text += (
+        "\n*Услуги по таможенному оформлению:*\n"
+        f"Таможенное оформление: {format_float(tof)} ₽\n"
+    )
+    result_text += (
+         "\n*Услуги по таможенному оформлению:*\n"
+        f"Таможенное оформление: {format_float(tof)} ₽\n"
+    )
+
     message_text += f"Комиссия компании: {format_float(commission)} ₽\n\n"
     result_text += f"Комиссия компании: {format_float(commission)} ₽\n\n"
     message_exchange_rate_text = ''
@@ -315,7 +325,7 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
         result_text += f"Курс на {updated_at.strftime('%d.%m.%Y')}: 1 {currency} = {exchange_rates[currency]['exchange_rate']} ₽\n\n"
     result_text += f"Итоговая сумма: {format_float(result)} ₽"
     message_text += (
-        f"*Итоговая сумма: {format_float(result)} ₽*\n\n"
+        f"*Общая сумма стоимости авто в РФ:\n{format_float(result)} ₽*\n\n"
         f"Расчеты произведены на актуальный курс{f': {message_exchange_rate_text}' if message_exchange_rate_text else '.'}\n\n"
         "Остались вопросы? Хотите оставить заявку?\n"
         "Свяжитесь с нами!\n"
