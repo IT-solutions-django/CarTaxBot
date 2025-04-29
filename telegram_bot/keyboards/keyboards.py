@@ -50,14 +50,6 @@ car_type_buttons = [
 ]
 
 age_buttons = [
-    [types.InlineKeyboardButton(text='Меньше 3-х лет', callback_data='age_less_3')],
-    [types.InlineKeyboardButton(text='3-5 лет', callback_data='age_3_5')],
-    [types.InlineKeyboardButton(text='5-7 лет', callback_data='age_5_7')],
-    [types.InlineKeyboardButton(text='Больше 7 лет', callback_data='age_more_7')],
-]
-
-
-age_buttons = [
     [types.InlineKeyboardButton(text=f'{car_age.value.capitalize()}', callback_data=f'age_{car_age.value}')] 
     for car_age in CarAge
 ]
@@ -70,4 +62,9 @@ engine_type_buttons = [
 contacts_buttons = [
     [types.InlineKeyboardButton(text="Позвонить: 7 (913) 795-65-56", callback_data='_')],
     [types.InlineKeyboardButton(text="Написать на почту", callback_data='_')]
+]
+
+is_power_known_buttons = [
+    [types.InlineKeyboardButton(text="Да", callback_data='is_power_known_1')],
+    [types.InlineKeyboardButton(text="Нет", callback_data='is_power_known_0')]
 ]

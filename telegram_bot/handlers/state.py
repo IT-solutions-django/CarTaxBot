@@ -12,6 +12,7 @@ class CarDutyCalculation(StatesGroup):
     client_type = State()
     age = State()
     engine_type = State()
+    power_known = State()
 
 
 class ClientContacts(StatesGroup):
