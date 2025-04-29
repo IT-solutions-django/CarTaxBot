@@ -288,8 +288,7 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
     )
     result_text = '' 
     result_text += (
-        f"\n*Результаты расчёта*:\n"
-        f"\n*Таможенные платежи:*\n"
+        f"Таможенные платежи:\n"
         f"Таможенная пошлина: {format_float(duty)} ₽\n"
         f"Утилизационный сбор: {format_float(yts)} ₽\n"
     )
@@ -311,7 +310,7 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
         f"Таможенное оформление: {format_float(tof)} ₽\n"
     )
     result_text += (
-         "\n*Услуги по таможенному оформлению:*\n"
+         "\nУслуги по таможенному оформлению:\n"
         f"Таможенное оформление: {format_float(tof)} ₽\n"
     )
 
