@@ -225,12 +225,14 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
     result_text = '' 
     result_text += (
         f"Таможенные платежи:\n"
+        f"Таможенные сборы: {format_float(tof)} ₽\n"
         f"Таможенная пошлина: {format_float(duty)} ₽\n"
         f"Утилизационный сбор: {format_float(yts)} ₽\n"
     )
     message_text += (
         f"\n*Результаты расчёта*:\n"
         f"\n*Таможенные платежи:*\n"
+        f"Таможенные сборы: {format_float(tof)} ₽\n"
         f"Таможенная пошлина: {format_float(duty)} ₽\n"
         f"Утилизационный сбор: {format_float(yts)} ₽\n"
     )
@@ -243,11 +245,9 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
 
     message_text += (
         "\n*Услуги по таможенному оформлению:*\n"
-        f"Таможенные сборы: {format_float(tof)} ₽\n"
     )
     result_text += (
          "\nУслуги по таможенному оформлению:\n"
-        f"Таможенные сборы: {format_float(tof)} ₽\n"
     )
 
     message_text += f"Комиссия компании: {format_float(commission)} ₽\n\n"
@@ -258,9 +258,9 @@ async def calculate_duty(callback: types.CallbackQuery, state: FSMContext):
         updated_at = datetime.strptime(exchange_rates[currency]['updated_at'], '%Y-%m-%dT%H:%M:%S.%fZ')
         message_exchange_rate_text = f'1 {currency} = {exchange_rates[currency]["exchange_rate"]} ₽'
         result_text += f"Курс на {updated_at.strftime('%d.%m.%Y')}: 1 {currency} = {exchange_rates[currency]['exchange_rate']} ₽\n\n"
-    result_text += f"Итоговая сумма: {format_float(result)} ₽"
+    result_text += f"Расходы по РФ: {format_float(result)} ₽"
     message_text += (
-        f"*Общая сумма стоимости авто в РФ:\n{format_float(result)} ₽*\n\n"
+        f"*Расходы по РФ: {format_float(result)} ₽*\n\n"
         f"Расчеты произведены на актуальный курс{f': {message_exchange_rate_text}' if message_exchange_rate_text else '.'}\n\n"
         "Остались вопросы? Хотите оставить заявку?\n"
         "Свяжитесь с нами!\n"
